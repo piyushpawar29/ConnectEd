@@ -9,7 +9,7 @@ const users = [
     id: "1",
     name: "Demo User",
     email: "user@example.com",
-    password: "password123", // In a real app, this would be hashed
+    password: "password123",
     image: "/placeholder.svg?height=80&width=80",
   },
 ]
