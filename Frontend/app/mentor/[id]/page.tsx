@@ -41,7 +41,7 @@ const mockMentorProfile = {
     { day: "Wednesday", slots: ["1:00 PM - 2:00 PM", "4:00 PM - 5:00 PM"] },
     { day: "Friday", slots: ["9:00 AM - 10:00 AM", "3:00 PM - 4:00 PM"] },
   ],
-  profilePicture: "/placeholder.svg?height=400&width=300",
+  profilePicture: "/sarah.jpeg?height=400&width=300",
   rating: 4.9,
   reviewCount: 127,
   hourlyRate: 120,

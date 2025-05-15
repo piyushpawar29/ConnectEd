@@ -120,7 +120,7 @@ export default function BackgroundScene() {
       particlesGeometry.attributes.position.needsUpdate = true
     }
 
-    window.addEventListener("mousemove", handleMouseMove)
+    //window.addEventListener("mousemove", handleMouseMove)
 
     // Animation loop
     const animate = () => {

@@ -21,7 +21,7 @@ import {
   Star,
   ArrowRight,
   Sparkles,
-  Clock,
+  Clock,Home
 } from "lucide-react"
 
 // Mock data for the mentee profile
@@ -241,6 +241,31 @@ export default function MenteeDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 pt-24 pb-16">
+      <header className="absolute top-4 left-0 w-full h-14 bg-gray-900/50 backdrop-blur-sm z-10">
+            <div className="container mx-auto px-4 flex items-center justify-between">
+              <Link href="/" passHref>
+                <div className="flex items-center space-x-2 cursor-pointer">
+                  <img src="/logo.png" alt="Logo" className="h-8 w-8" />
+                  <h1 className="text-2xl font-bold">ConnectEd</h1>
+                </div>
+              </Link>
+              <div className="flex items-center space-x-4">
+                <Link href="/" passHref>
+                  <Button variant="outline" className="border-cyan-500 text-cyan-500 hover:bg-cyan-950">
+                    <Home className="h-4 w-4 mr-2" />
+                    Home Page
+                  </Button>
+                </Link>
+                <Link href="/logout" passHref>
+                  <Button variant="outline" className="border-cyan-500 text-cyan-500 hover:bg-cyan-950">
+                    
+                    Logout
+                  </Button>
+                </Link>
+              </div>
+            </div>
+      
+            </header>
       <div className="container mx-auto px-4">
         <div className="flex flex-col space-y-6">
           <h1 className="text-3xl font-bold">Mentee Dashboard</h1>

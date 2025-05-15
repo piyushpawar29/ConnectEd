@@ -27,6 +27,7 @@ import AuthModal from "@/components/auth-modal"
 import MentorSpotlight from "@/components/mentor-spotlight"
 import BackgroundScene from "@/components/background-scene"
 
+
 export default function LandingPage() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -64,12 +65,6 @@ export default function LandingPage() {
   const openAuthModal = (type: "login" | "signup") => {
     setAuthType(type)
     setShowAuthModal(true)
-  }
-
-  // Toggle theme
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark")
-    document.documentElement.classList.toggle("dark")
   }
 
   return (
@@ -126,8 +121,8 @@ export default function LandingPage() {
               }}
               className="text-gray-300 hover:text-white transition-colors"
             >
-              Mentors
-            </Link>
+              Get Started
+            </Link> 
             <Link href="/dashboard/mentor" className="text-gray-300 hover:text-white transition-colors">
               Mentor Dashboard
             </Link>
@@ -336,11 +331,11 @@ export default function LandingPage() {
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-2xl blur-xl"></div>
                 <Image
-                  src="/placeholder.svg?height=500&width=600"
+                  src="/hero-section.png?height=500&width=600"
                   width={600}
                   height={500}
                   alt="AI Mentorship Illustration"
-                  className="relative z-10 rounded-2xl"
+                  className="relative z-10 rounded-2xl "
                   priority
                 />
 
@@ -468,7 +463,7 @@ export default function LandingPage() {
                   <div className="relative">
                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-xl blur-lg"></div>
                     <Image
-                      src="/placeholder.svg?height=300&width=400&text=AI+Matching"
+                      src="/ai-feature.jpg?height=300&width=400&text=AI+Matching"
                       width={400}
                       height={300}
                       alt="AI Matching"
@@ -756,19 +751,19 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="mt-12 text-center">
+          {/* <div className="mt-12 text-center">
             <Button
               className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white px-8 py-6 text-lg"
               onClick={() => openAuthModal("signup")}
             >
               Start Your Journey
             </Button>
-          </div>
+          </div> */}
         </div>
       </section>
 
       {/* Mentor Spotlight Section */}
-      <section id="mentors" className="py-20 bg-gray-950 relative">
+      {/* <section id="mentors" className="py-20 bg-gray-950 relative">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <Badge className="mb-4 bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors">
@@ -792,7 +787,7 @@ export default function LandingPage() {
             </Button>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Final CTA Section */}
       <section className="py-20 bg-gray-950 relative overflow-hidden">
@@ -867,7 +862,7 @@ export default function LandingPage() {
               <p className="text-gray-400 text-sm mb-4">
                 Connecting learners with expert mentors through the power of AI.
               </p>
-              <div className="flex gap-4">
+              {/* <div className="flex gap-4">
                 <Link href="#" className="text-gray-400 hover:text-white transition-colors">
                   <Twitter className="h-5 w-5" />
                 </Link>
@@ -877,7 +872,7 @@ export default function LandingPage() {
                 <Link href="#" className="text-gray-400 hover:text-white transition-colors">
                   <Instagram className="h-5 w-5" />
                 </Link>
-              </div>
+              </div> */}
             </div>
 
             <div>
@@ -893,16 +888,16 @@ export default function LandingPage() {
                     How it Works
                   </Link>
                 </li>
-                <li>
+                {/* <li>
                   <Link href="#mentors" className="text-gray-400 hover:text-white transition-colors text-sm">
                     Mentors
                   </Link>
-                </li>
-                <li>
+                </li> */}
+                {/* <li>
                   <Link href="#" className="text-gray-400 hover:text-white transition-colors text-sm">
                     For Businesses
                   </Link>
-                </li>
+                </li> */}
               </ul>
             </div>
 
@@ -914,16 +909,16 @@ export default function LandingPage() {
                     About Us
                   </Link>
                 </li>
-                <li>
+                {/* <li>
                   <Link href="#" className="text-gray-400 hover:text-white transition-colors text-sm">
                     Careers
                   </Link>
-                </li>
-                <li>
+                </li> */}
+                {/* <li>
                   <Link href="#" className="text-gray-400 hover:text-white transition-colors text-sm">
                     Blog
                   </Link>
-                </li>
+                </li> */}
                 <li>
                   <Link href="#" className="text-gray-400 hover:text-white transition-colors text-sm">
                     Contact
