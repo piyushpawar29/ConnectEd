@@ -15,7 +15,7 @@ const mentors = [
     name: "Dr. Sarah Johnson",
     role: "AI Research Scientist",
     company: "TechInnovate",
-    image: "/placeholder.svg?height=400&width=300",
+    image: "/sarah.jpeg?height=400&width=300",
     rating: 4.9,
     reviews: 127,
     expertise: ["Machine Learning", "Neural Networks", "Computer Vision"],
@@ -133,7 +133,7 @@ export default function MentorSpotlight() {
         </Button>
       </div>
 
-      <div className="overflow-hidden">
+      <div className="overflow-hidden ">
         <AnimatePresence custom={direction} initial={false}>
           <motion.div
             key={currentIndex}

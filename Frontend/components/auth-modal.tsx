@@ -434,12 +434,12 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex justify-between">
+                  {/* <div className="flex justify-between">
                     <Label htmlFor="password">Password</Label>
                     <a href="#" className="text-xs text-cyan-500 hover:text-cyan-400">
                       Forgot password?
                     </a>
-                  </div>
+                  </div> */}
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
@@ -454,16 +454,6 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="remember" />
-                  <label
-                    htmlFor="remember"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    Remember me
-                  </label>
-                </div>
-
                 <Button
                   type="submit"
                   className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
@@ -474,28 +464,7 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
               </div>
             </form>
 
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-700"></div>
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-gray-900 px-2 text-gray-400">Or continue with</span>
-                </div>
-              </div>
-
-              <div className="mt-6 grid grid-cols-1 gap-3">
-                <Button
-                  variant="outline"
-                  className="border-gray-700 hover:bg-gray-800"
-                  onClick={() => handleSocialSignIn("google")}
-                  disabled={loading}
-                >
-                  <Google className="h-4 w-4 mr-2" />
-                  Continue with Google
-                </Button>
-              </div>
-            </div>
+           
           </TabsContent>
 
           <TabsContent value="signup">
@@ -556,24 +525,6 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
                     </div>
                     <p className="text-xs text-gray-400">Password must be at least 8 characters long</p>
                   </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="terms" required />
-                    <label
-                      htmlFor="terms"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      I agree to the{" "}
-                      <a href="#" className="text-cyan-500 hover:text-cyan-400">
-                        Terms of Service
-                      </a>{" "}
-                      and{" "}
-                      <a href="#" className="text-cyan-500 hover:text-cyan-400">
-                        Privacy Policy
-                      </a>
-                    </label>
-                  </div>
-
                   <Button
                     type="submit"
                     className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
@@ -590,31 +541,6 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
 
               {showRoleSelection && showProfileForm && userRole === "mentee" && renderMenteeProfileForm()}
             </form>
-
-            {!showRoleSelection && (
-              <div className="mt-6">
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-700"></div>
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-gray-900 px-2 text-gray-400">Or continue with</span>
-                  </div>
-                </div>
-
-                <div className="mt-6 grid grid-cols-1 gap-3">
-                  <Button
-                    variant="outline"
-                    className="border-gray-700 hover:bg-gray-800"
-                    onClick={() => handleSocialSignIn("google")}
-                    disabled={loading}
-                  >
-                    <Google className="h-4 w-4 mr-2" />
-                    Continue with Google
-                  </Button>
-                </div>
-              </div>
-            )}
           </TabsContent>
         </Tabs>
       </motion.div>
