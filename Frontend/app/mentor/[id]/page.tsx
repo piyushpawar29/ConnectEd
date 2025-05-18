@@ -24,121 +24,122 @@ import { Calendar } from "@/components/ui/calendar"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Star, ArrowLeft, CalendarIcon, Video, MessageSquare, Languages, Briefcase, Award, Loader2 } from "lucide-react"
+import axios from "axios"
 
-// Mock data for the mentor profile
-const mockMentorProfile = {
-  id: "m123",
-  name: "Dr. Sarah Johnson",
-  role: "AI Research Scientist",
-  company: "TechInnovate",
-  bio: "Former lead AI researcher at Google with 10+ years of experience in machine learning and neural networks. I help aspiring AI researchers and practitioners develop cutting-edge skills and navigate their career path.",
-  skills: ["Machine Learning", "Neural Networks", "Computer Vision", "Research Methods"],
-  yearsOfExperience: "10+ years",
-  languages: ["English", "Mandarin"],
-  communicationPreference: "video",
-  availability: [
-    { day: "Monday", slots: ["10:00 AM - 11:00 AM", "2:00 PM - 3:00 PM"] },
-    { day: "Wednesday", slots: ["1:00 PM - 2:00 PM", "4:00 PM - 5:00 PM"] },
-    { day: "Friday", slots: ["9:00 AM - 10:00 AM", "3:00 PM - 4:00 PM"] },
-  ],
-  profilePicture: "/sarah.jpeg?height=400&width=300",
-  rating: 4.9,
-  reviewCount: 127,
-  hourlyRate: 120,
-  sessionTypes: [
-    { id: "1on1", name: "1:1 Video Session", duration: 60, price: 120 },
-    { id: "group", name: "Group Session", duration: 90, price: 80 },
-    { id: "code", name: "Code Review", duration: 45, price: 100 },
-  ],
-  education: [
-    { degree: "PhD in Computer Science", institution: "Stanford University", year: "2011" },
-    { degree: "MS in Computer Science", institution: "MIT", year: "2008" },
-    { degree: "BS in Computer Science", institution: "UC Berkeley", year: "2006" },
-  ],
-  certifications: [
-    { name: "TensorFlow Developer Certificate", issuer: "Google", year: "2019" },
-    { name: "AWS Machine Learning Specialty", issuer: "Amazon Web Services", year: "2020" },
-  ],
-  workExperience: [
-    {
-      role: "AI Research Scientist",
-      company: "TechInnovate",
-      period: "2020 - Present",
-      description:
-        "Leading research initiatives in computer vision and natural language processing. Mentoring junior researchers and collaborating with cross-functional teams.",
-    },
-    {
-      role: "Senior Research Scientist",
-      company: "Google AI",
-      period: "2015 - 2020",
-      description:
-        "Conducted research on deep learning models for computer vision applications. Published multiple papers in top-tier conferences.",
-    },
-    {
-      role: "Research Scientist",
-      company: "Stanford AI Lab",
-      period: "2011 - 2015",
-      description: "Focused on developing novel neural network architectures for image recognition tasks.",
-    },
-  ],
-  reviews: [
-    {
-      id: 1,
-      user: {
-        name: "Michael Chen",
-        image: "/placeholder.svg?height=40&width=40",
-      },
-      rating: 5,
-      date: "2023-10-15",
-      comment:
-        "Sarah is an exceptional mentor! Her deep knowledge of machine learning and neural networks helped me understand complex concepts that I was struggling with. She provided practical advice that I could immediately apply to my research project.",
-    },
-    {
-      id: 2,
-      user: {
-        name: "Jessica Williams",
-        image: "/placeholder.svg?height=40&width=40",
-      },
-      rating: 5,
-      date: "2023-09-22",
-      comment:
-        "Working with Sarah has been transformative for my career. She helped me navigate the transition from academia to industry and provided invaluable guidance on how to apply my research skills in a commercial setting.",
-    },
-    {
-      id: 3,
-      user: {
-        name: "David Rodriguez",
-        image: "/placeholder.svg?height=40&width=40",
-      },
-      rating: 4,
-      date: "2023-08-10",
-      comment:
-        "Sarah's mentorship has been incredibly helpful. She's very knowledgeable and patient. The only reason I'm not giving 5 stars is that sometimes our sessions ran over time, but that's partly because I had so many questions!",
-    },
-    {
-      id: 4,
-      user: {
-        name: "Emma Thompson",
-        image: "/placeholder.svg?height=40&width=40",
-      },
-      rating: 5,
-      date: "2023-07-05",
-      comment:
-        "I've had several mentors in the past, but Sarah stands out for her ability to explain complex concepts in a way that's easy to understand. She's also great at providing constructive feedback that has helped me improve my skills significantly.",
-    },
-    {
-      id: 5,
-      user: {
-        name: "James Wilson",
-        image: "/placeholder.svg?height=40&width=40",
-      },
-      rating: 5,
-      date: "2023-06-18",
-      comment:
-        "Sarah's guidance has been instrumental in helping me land my dream job in AI research. Her insights into the industry and advice on how to position myself were spot on. I can't recommend her enough!",
-    },
-  ],
-}
+// // Mock data for the mentor profile
+// const mockMentorProfile = {
+//   id: "m123",
+//   name: "Dr. Sarah Johnson",
+//   role: "AI Research Scientist",
+//   company: "TechInnovate",
+//   bio: "Former lead AI researcher at Google with 10+ years of experience in machine learning and neural networks. I help aspiring AI researchers and practitioners develop cutting-edge skills and navigate their career path.",
+//   skills: ["Machine Learning", "Neural Networks", "Computer Vision", "Research Methods"],
+//   yearsOfExperience: "10+ years",
+//   languages: ["English", "Mandarin"],
+//   communicationPreference: "video",
+//   availability: [
+//     { day: "Monday", slots: ["10:00 AM - 11:00 AM", "2:00 PM - 3:00 PM"] },
+//     { day: "Wednesday", slots: ["1:00 PM - 2:00 PM", "4:00 PM - 5:00 PM"] },
+//     { day: "Friday", slots: ["9:00 AM - 10:00 AM", "3:00 PM - 4:00 PM"] },
+//   ],
+//   profilePicture: "/sarah.jpeg?height=400&width=300",
+//   rating: 4.9,
+//   reviewCount: 127,
+//   hourlyRate: 120,
+//   sessionTypes: [
+//     { id: "1on1", name: "1:1 Video Session", duration: 60, price: 120 },
+//     { id: "group", name: "Group Session", duration: 90, price: 80 },
+//     { id: "code", name: "Code Review", duration: 45, price: 100 },
+//   ],
+//   education: [
+//     { degree: "PhD in Computer Science", institution: "Stanford University", year: "2011" },
+//     { degree: "MS in Computer Science", institution: "MIT", year: "2008" },
+//     { degree: "BS in Computer Science", institution: "UC Berkeley", year: "2006" },
+//   ],
+//   certifications: [
+//     { name: "TensorFlow Developer Certificate", issuer: "Google", year: "2019" },
+//     { name: "AWS Machine Learning Specialty", issuer: "Amazon Web Services", year: "2020" },
+//   ],
+//   // workExperience: [
+//   //   {
+//   //     role: "AI Research Scientist",
+//   //     company: "TechInnovate",
+//   //     period: "2020 - Present",
+//   //     description:
+//   //       "Leading research initiatives in computer vision and natural language processing. Mentoring junior researchers and collaborating with cross-functional teams.",
+//   //   },
+//   //   {
+//   //     role: "Senior Research Scientist",
+//   //     company: "Google AI",
+//   //     period: "2015 - 2020",
+//   //     description:
+//   //       "Conducted research on deep learning models for computer vision applications. Published multiple papers in top-tier conferences.",
+//   //   },
+//   //   {
+//   //     role: "Research Scientist",
+//   //     company: "Stanford AI Lab",
+//   //     period: "2011 - 2015",
+//   //     description: "Focused on developing novel neural network architectures for image recognition tasks.",
+//   //   },
+//   // ],
+//   reviews: [
+//     {
+//       id: 1,
+//       user: {
+//         name: "Michael Chen",
+//         image: "/placeholder.svg?height=40&width=40",
+//       },
+//       rating: 5,
+//       date: "2023-10-15",
+//       comment:
+//         "Sarah is an exceptional mentor! Her deep knowledge of machine learning and neural networks helped me understand complex concepts that I was struggling with. She provided practical advice that I could immediately apply to my research project.",
+//     },
+//     {
+//       id: 2,
+//       user: {
+//         name: "Jessica Williams",
+//         image: "/placeholder.svg?height=40&width=40",
+//       },
+//       rating: 5,
+//       date: "2023-09-22",
+//       comment:
+//         "Working with Sarah has been transformative for my career. She helped me navigate the transition from academia to industry and provided invaluable guidance on how to apply my research skills in a commercial setting.",
+//     },
+//     {
+//       id: 3,
+//       user: {
+//         name: "David Rodriguez",
+//         image: "/placeholder.svg?height=40&width=40",
+//       },
+//       rating: 4,
+//       date: "2023-08-10",
+//       comment:
+//         "Sarah's mentorship has been incredibly helpful. She's very knowledgeable and patient. The only reason I'm not giving 5 stars is that sometimes our sessions ran over time, but that's partly because I had so many questions!",
+//     },
+//     {
+//       id: 4,
+//       user: {
+//         name: "Emma Thompson",
+//         image: "/placeholder.svg?height=40&width=40",
+//       },
+//       rating: 5,
+//       date: "2023-07-05",
+//       comment:
+//         "I've had several mentors in the past, but Sarah stands out for her ability to explain complex concepts in a way that's easy to understand. She's also great at providing constructive feedback that has helped me improve my skills significantly.",
+//     },
+//     {
+//       id: 5,
+//       user: {
+//         name: "James Wilson",
+//         image: "/placeholder.svg?height=40&width=40",
+//       },
+//       rating: 5,
+//       date: "2023-06-18",
+//       comment:
+//         "Sarah's guidance has been instrumental in helping me land my dream job in AI research. Her insights into the industry and advice on how to position myself were spot on. I can't recommend her enough!",
+//     },
+//   ],
+// }
 
 export default function MentorProfilePage() {
   const params = useParams()
@@ -165,12 +166,12 @@ export default function MentorProfilePage() {
       try {
         setLoading(true)
         // In a real app, this would be an actual API call
-        // const response = await axios.get(`/api/mentors/${params.id}`);
-        // setMentor(response.data);
+        const response = await axios.get(`/api/mentors/${params.id}`);
+        setMentor(response.data);
 
         // Simulate API delay
         setTimeout(() => {
-          setMentor(mockMentorProfile)
+          // setLoading(false)
           setLoading(false)
         }, 1000)
       } catch (error) {
@@ -200,16 +201,16 @@ export default function MentorProfilePage() {
     setBookingLoading(true)
     try {
       // In a real app, this would be an actual API call
-      // const response = await axios.post('/api/bookings', {
-      //   mentorId: mentor.id,
-      //   sessionType: selectedSessionType,
-      //   date: selectedDate,
-      //   timeSlot: selectedTimeSlot,
-      //   note: bookingNote,
-      // });
+      const response = await axios.post('/api/bookings', {
+        mentorId: mentor.id,
+        sessionType: selectedSessionType,
+        date: selectedDate,
+        timeSlot: selectedTimeSlot,
+        note: bookingNote,
+      });
 
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      // // Simulate API delay
+      // await new Promise((resolve) => setTimeout(resolve, 1500))
 
       toast({
         title: "Booking Successful",
@@ -255,13 +256,13 @@ export default function MentorProfilePage() {
     setReviewLoading(true)
     try {
       // In a real app, this would be an actual API call
-      // const response = await axios.post(`/api/mentors/${mentor.id}/reviews`, {
-      //   rating: reviewRating,
-      //   comment: reviewComment,
-      // });
+      const response = await axios.post(`/api/mentors/${mentor.id}/reviews`, {
+        rating: reviewRating,
+        comment: reviewComment,
+      });
 
       // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      // await new Promise((resolve) => setTimeout(resolve, 1500))
 
       toast({
         title: "Review Submitted",
@@ -351,7 +352,7 @@ export default function MentorProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 pt-24 pb-16">
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 pt-4 pb-16">
       <div className="container mx-auto px-4">
         <div className="flex items-center gap-2 mb-6">
           <Button variant="ghost" className="text-gray-400 hover:text-white" onClick={() => router.back()}>
@@ -456,19 +457,19 @@ export default function MentorProfilePage() {
           {/* Main Content */}
           <div className="md:col-span-2">
             <Tabs defaultValue="overview" className="w-full" onValueChange={setActiveTab}>
-              <TabsList className="grid grid-cols-3 mb-8 bg-gray-900/50 p-1 rounded-lg">
+              <TabsList className="grid grid-cols-2 mb-5 bg-gray-900/50 p-1 rounded-lg">
                 <TabsTrigger
                   value="overview"
                   className="data-[state=active]:bg-gradient-to-r from-cyan-500/20 to-blue-500/20 data-[state=active]:text-cyan-400"
                 >
                   Overview
                 </TabsTrigger>
-                <TabsTrigger
+                {/* <TabsTrigger
                   value="experience"
                   className="data-[state=active]:bg-gradient-to-r from-cyan-500/20 to-blue-500/20 data-[state=active]:text-cyan-400"
                 >
                   Experience
-                </TabsTrigger>
+                </TabsTrigger> */}
                 <TabsTrigger
                   value="reviews"
                   className="data-[state=active]:bg-gradient-to-r from-cyan-500/20 to-blue-500/20 data-[state=active]:text-cyan-400"
@@ -588,7 +589,7 @@ export default function MentorProfilePage() {
               </TabsContent>
 
               {/* Experience Tab */}
-              <TabsContent value="experience" className="space-y-6">
+              {/* <TabsContent value="experience" className="space-y-6">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -674,7 +675,7 @@ export default function MentorProfilePage() {
                     </CardContent>
                   </Card>
                 </motion.div>
-              </TabsContent>
+              </TabsContent> */}
 
               {/* Reviews Tab */}
               <TabsContent value="reviews" className="space-y-6">
@@ -806,7 +807,7 @@ export default function MentorProfilePage() {
                 mode="single"
                 selected={selectedDate}
                 onSelect={setSelectedDate}
-                className="rounded-md border bg-gray-800 text-white"
+                className="rounded-md border border-gray-700 bg-gray-800 text-white"
               />
             </div>
 

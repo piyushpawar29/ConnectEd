@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import axios from "axios"
 
 interface AuthModalProps {
   type: "login" | "signup"
@@ -24,10 +25,11 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError("")
+    await axios.post(`/api/auth/${type}`, { name, email, password })
 
     // Simulate API call
     setTimeout(() => {

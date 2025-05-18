@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
@@ -28,64 +27,104 @@ import {
   X,
   Loader2,Home
 } from "lucide-react"
+import axios from "axios"
 
-// Mock data for the mentor profile
-const mockMentorProfile = {
-  id: "m123",
-  name: "Dr. Sarah Johnson",
-  email: "sarah.johnson@example.com",
-  bio: "Former lead AI researcher at Google with 10+ years of experience in machine learning and neural networks. I help aspiring AI researchers and practitioners develop cutting-edge skills and navigate their career path.",
-  skills: ["Machine Learning", "Neural Networks", "Computer Vision", "Research Methods"],
-  experience: "10+ years",
-  languages: ["English", "Mandarin"],
-  communicationPreference: "video",
-  availability: [
-    { day: "Monday", slots: ["10:00 AM - 11:00 AM", "2:00 PM - 3:00 PM"] },
-    { day: "Wednesday", slots: ["1:00 PM - 2:00 PM", "4:00 PM - 5:00 PM"] },
-    { day: "Friday", slots: ["9:00 AM - 10:00 AM", "3:00 PM - 4:00 PM"] },
-  ],
-  profilePicture: "/placeholder.svg?height=200&width=200",
-  rating: 4.9,
-  reviewCount: 127,
+// // Mock data for the mentor profile
+// const mockMentorProfile = {
+//   id: "m123",
+//   name: "Dr. Sarah Johnson",
+//   email: "sarah.johnson@example.com",
+//   bio: "Former lead AI researcher at Google with 10+ years of experience in machine learning and neural networks. I help aspiring AI researchers and practitioners develop cutting-edge skills and navigate their career path.",
+//   skills: ["Machine Learning", "Neural Networks", "Computer Vision", "Research Methods"],
+//   experience: "10+ years",
+//   languages: ["English", "Mandarin"],
+//   communicationPreference: "video",
+//   availability: [
+//     { day: "Monday", slots: ["10:00 AM - 11:00 AM", "2:00 PM - 3:00 PM"] },
+//     { day: "Wednesday", slots: ["1:00 PM - 2:00 PM", "4:00 PM - 5:00 PM"] },
+//     { day: "Friday", slots: ["9:00 AM - 10:00 AM", "3:00 PM - 4:00 PM"] },
+//   ],
+//   profilePicture: "/placeholder.svg?height=200&width=200",
+//   rating: 4.9,
+//   reviewCount: 127,
+// }
+
+// // Mock data for upcoming sessions
+// const mockUpcomingSessions = [
+//   {
+//     id: "s1",
+//     menteeId: "mentee1",
+//     menteeName: "Michael Chen",
+//     menteeImage: "/placeholder.svg?height=40&width=40",
+//     date: "2023-11-15T14:00:00",
+//     duration: 60,
+//     topic: "Introduction to Neural Networks",
+//     status: "confirmed",
+//   },
+//   {
+//     id: "s2",
+//     menteeId: "mentee2",
+//     menteeName: "Jessica Williams",
+//     menteeImage: "/placeholder.svg?height=40&width=40",
+//     date: "2023-11-17T10:00:00",
+//     duration: 45,
+//     topic: "Career Transition to AI Research",
+//     status: "confirmed",
+//   },
+//   {
+//     id: "s3",
+//     menteeId: "mentee3",
+//     menteeName: "David Rodriguez",
+//     menteeImage: "/placeholder.svg?height=40&width=40",
+//     date: "2023-11-20T15:30:00",
+//     duration: 30,
+//     topic: "Research Paper Review",
+//     status: "pending",
+//   },
+// ]
+
+interface Profile {
+  id: string
+  name: string
+  email: string
+  bio: string
+  skills: string[]
+  experience: string
+  languages: string[]
+  communicationPreference: string
+  availability: { day: string; slots: string[] }[]
+  profilePicture: string
+  rating: number
+  reviewCount: number
 }
 
-// Mock data for upcoming sessions
-const mockUpcomingSessions = [
-  {
-    id: "s1",
-    menteeId: "mentee1",
-    menteeName: "Michael Chen",
-    menteeImage: "/placeholder.svg?height=40&width=40",
-    date: "2023-11-15T14:00:00",
-    duration: 60,
-    topic: "Introduction to Neural Networks",
-    status: "confirmed",
-  },
-  {
-    id: "s2",
-    menteeId: "mentee2",
-    menteeName: "Jessica Williams",
-    menteeImage: "/placeholder.svg?height=40&width=40",
-    date: "2023-11-17T10:00:00",
-    duration: 45,
-    topic: "Career Transition to AI Research",
-    status: "confirmed",
-  },
-  {
-    id: "s3",
-    menteeId: "mentee3",
-    menteeName: "David Rodriguez",
-    menteeImage: "/placeholder.svg?height=40&width=40",
-    date: "2023-11-20T15:30:00",
-    duration: 30,
-    topic: "Research Paper Review",
-    status: "pending",
-  },
-]
+interface Session {
+  id: string
+  menteeId: string
+  menteeName: string
+  menteeImage: string
+  date: string
+  duration: number
+  topic: string
+  status: string
+}
 
 export default function MentorDashboard() {
-  const [profile, setProfile] = useState(mockMentorProfile)
-  const [upcomingSessions, setUpcomingSessions] = useState(mockUpcomingSessions)
+  const [profile, setProfile] = useState<Profile>({
+    id: "",
+    name: "",
+    email: "",
+    bio: "",
+    skills: [],
+    experience: "",
+    languages: [],
+    communicationPreference: "",
+    availability: [],
+    profilePicture: "",
+    rating: 0,
+    reviewCount: 0,
+  })
+  const [upcomingSessions, setUpcomingSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [newSkill, setNewSkill] = useState("")
@@ -99,11 +138,11 @@ export default function MentorDashboard() {
     const fetchData = async () => {
       try {
         // In a real app, these would be actual API calls
-        // const profileResponse = await axios.get('/api/mentor/profile');
-        // const sessionsResponse = await axios.get('/api/mentor/sessions');
+        const profileResponse = await axios.get('/api/mentor/profile');
+        const sessionsResponse = await axios.get('/api/mentor/sessions');
 
-        // setProfile(profileResponse.data);
-        // setUpcomingSessions(sessionsResponse.data);
+        setProfile(profileResponse.data);
+        setUpcomingSessions(sessionsResponse.data);
 
         // Simulate API delay
         setTimeout(() => {
@@ -127,10 +166,10 @@ export default function MentorDashboard() {
     setSaving(true)
     try {
       // In a real app, this would be an actual API call
-      // await axios.put('/api/mentor/profile', profile);
+      await axios.put('/api/mentor/profile', profile);
 
       // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // await new Promise((resolve) => setTimeout(resolve, 1000))
 
       toast({
         title: "Profile Updated",
@@ -263,12 +302,15 @@ export default function MentorDashboard() {
     <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 pt-24 pb-16">
       <header className="absolute top-4 left-0 w-full h-14 bg-gray-900/50 backdrop-blur-sm z-10">
       <div className="container mx-auto px-4 flex items-center justify-between">
-        <Link href="/" passHref>
-          <div className="flex items-center space-x-2 cursor-pointer">
-            <img src="/logo.png" alt="Logo" className="h-8 w-8" />
-            <h1 className="text-2xl font-bold">ConnectEd</h1>
-          </div>
-        </Link>
+       <Link href="/" className="flex items-center gap-2 z-50">
+            <div className="relative w-10 h-10">
+              <div className="absolute inset-0 bg-cyan-500 rounded-full blur-md opacity-70"></div>
+              <div className="relative flex items-center justify-center w-full h-full bg-gray-900 rounded-full border border-cyan-500 z-10">
+                <span className="font-bold text-cyan-500">C</span>
+              </div>
+            </div>
+            <span className="font-bold text-xl">ConnectEd</span>
+          </Link>
         <div className="flex items-center space-x-4">
           <Link href="/" passHref>
             <Button variant="outline" className="border-cyan-500 text-cyan-500 hover:bg-cyan-950">
@@ -447,7 +489,7 @@ export default function MentorDashboard() {
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
+                        {/* <div className="space-y-2">
                           <Label htmlFor="experience">Years of Experience</Label>
                           <Select
                             value={profile.experience}
@@ -463,7 +505,7 @@ export default function MentorDashboard() {
                               <SelectItem value="10+">10+ years</SelectItem>
                             </SelectContent>
                           </Select>
-                        </div>
+                        </div> */}
                         <div className="space-y-2">
                           <Label htmlFor="communication">Preferred Communication Method</Label>
                           <Select

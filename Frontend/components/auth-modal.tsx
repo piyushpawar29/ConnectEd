@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import type React from "react"
 
 import { useState } from "react"
+import zxcvbn from "zxcvbn"
 import { motion } from "framer-motion"
 import { X, Mail, Lock, User, ChromeIcon as Google, Briefcase, GraduationCap } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -48,6 +49,9 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
 
   const router = useRouter()
 
+  const [passwordStrength, setPasswordStrength] = useState(0)
+  const [passwordError, setPasswordError] = useState("")
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -58,6 +62,11 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
 
     if (type === "signup" && showRoleSelection && !showProfileForm && userRole) {
       setShowProfileForm(true)
+      return
+    }
+
+    if (type === "signup" && passwordStrength < 3) {
+      setPasswordError("Password is too weak. Use a mix of letters, numbers, and symbols.")
       return
     }
 
@@ -80,9 +89,6 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
           router.refresh()
         }
       } else {
-        // Register new user with role and profile data
-        // In a real app, this would call an API endpoint
-
         const userData = {
           name,
           email,
@@ -93,48 +99,28 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
             : { interests, goals, preferredLanguages }),
         }
 
-        console.log("Registering user:", userData)
+        try {
+          const res = await fetch("/api/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(userData),
+          })
 
-        // Simulate API call
-        setTimeout(() => {
-          onClose()
+          const data = await res.json()
 
-          // Redirect to appropriate dashboard
-          if (userRole === "mentor") {
-            router.push("/dashboard/mentor")
-          } else {
-            router.push("/dashboard/mentee")
+          if (!res.ok) {
+            throw new Error(data.message || "Failed to register user")
           }
-        }, 1000)
-      }
-    } catch (err) {
-      setError("An unexpected error occurred")
-    } finally {
-      setLoading(false)
-    }
-  }
 
-  const handleSocialSignIn = async (provider: string) => {
-    setLoading(true)
-    try {
-      if (provider === "google") {
-        // Firebase Google Auth Logic
-        // In a real implementation, this would use Firebase SDK
-        // import { GoogleAuthProvider, signInWithPopup, getAuth } from "firebase/auth";
-        //
-        // const auth = getAuth();
-        // const googleProvider = new GoogleAuthProvider();
-        // const result = await signInWithPopup(auth, googleProvider);
-        // const user = result.user;
-        //
-        // Then handle the authenticated user
-
-        // For now, we'll simulate the process
-        await signIn(provider, { callbackUrl: window.location.origin })
-      }
-    } catch (err) {
-      console.error(`Error signing in with ${provider}:`, err)
-      setError(`Error signing in with ${provider}`)
+          // On success
+          onClose()
+          router.push(userRole === "mentor" ? "/dashboard/mentor" : "/dashboard/mentee")
+        } catch (error: any) {
+          setError(error.message || "An unexpected error occurred")
+        }
+      } 
+    } catch (error: any) {
+      setError(error.message || "An unexpected error occurred")
     } finally {
       setLoading(false)
     }
@@ -448,10 +434,17 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
                       placeholder="••••••••"
                       className="pl-10 bg-gray-800 border-gray-700"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        setPassword(value)
+                        const result = zxcvbn(value)
+                        setPasswordStrength(result.score)
+                        setPasswordError("")
+                      }}
                       required
                     />
                   </div>
+                  {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
                 </div>
 
                 <Button
@@ -459,7 +452,17 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
                   className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
                   disabled={loading}
                 >
-                  {loading ? "Signing in..." : "Sign In"}
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 mr-2 inline" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" fill="none" />
+                      </svg>
+                      Signing in...
+                    </>
+                  ) : (
+                    "Sign In"
+                  )}
                 </Button>
               </div>
             </form>
@@ -519,18 +522,49 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
                         placeholder="••••••••"
                         className="pl-10 bg-gray-800 border-gray-700"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => {
+                          const value = e.target.value
+                          setPassword(value)
+                          const result = zxcvbn(value)
+                          setPasswordStrength(result.score)
+                          setPasswordError("")
+                        }}
                         required
                       />
                     </div>
-                    <p className="text-xs text-gray-400">Password must be at least 8 characters long</p>
+                    <div className="mt-1">
+                      <div className="h-2 w-full bg-gray-700 rounded">
+                        <div
+                          className={`h-2 rounded transition-all duration-300 ${
+                            ["bg-red-500", "bg-orange-500", "bg-yellow-500", "bg-green-400", "bg-green-600"][passwordStrength]
+                          }`}
+                          style={{ width: `${(passwordStrength + 1) * 20}%` }}
+                        />
+                      </div>
+                      {passwordError && <p className="text-xs text-red-500 mt-1">{passwordError}</p>}
+                      {!passwordError && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          Strength: {["Very Weak", "Weak", "Fair", "Good", "Strong"][passwordStrength]}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <Button
                     type="submit"
                     className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
                     disabled={loading}
                   >
-                    Continue
+                    {loading ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4 mr-2 inline" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" fill="none" />
+                        </svg>
+                        Creating account...
+                      </>
+                    ) : (
+                      "Continue"
+                    )}
                   </Button>
                 </div>
               )}

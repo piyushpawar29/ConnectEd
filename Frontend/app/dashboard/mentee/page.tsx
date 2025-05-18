@@ -23,127 +23,170 @@ import {
   Sparkles,
   Clock,Home
 } from "lucide-react"
+import axios from "axios"
 
-// Mock data for the mentee profile
-const mockMenteeProfile = {
-  id: "mentee123",
-  name: "Alex Johnson",
-  email: "alex.johnson@example.com",
-  interests: ["Machine Learning", "Web Development", "UX Design"],
-  goals:
-    "I want to transition from a software developer role to a machine learning engineer position within the next year.",
-  preferredLanguages: ["English", "Spanish"],
-  profilePicture: "/placeholder.svg?height=200&width=200",
+// // Mock data for the mentee profile
+// const mockMenteeProfile = {
+//   id: "mentee123",
+//   name: "Alex Johnson",
+//   email: "alex.johnson@example.com",
+//   interests: ["Machine Learning", "Web Development", "UX Design"],
+//   goals:
+//     "I want to transition from a software developer role to a machine learning engineer position within the next year.",
+//   preferredLanguages: ["English", "Spanish"],
+//   profilePicture: "/placeholder.svg?height=200&width=200",
+// }
+
+// // Mock data for upcoming sessions
+// const mockUpcomingSessions = [
+//   {
+//     id: "s1",
+//     mentorId: "mentor1",
+//     mentorName: "Dr. Sarah Johnson",
+//     mentorImage: "/placeholder.svg?height=40&width=40",
+//     date: "2023-11-15T14:00:00",
+//     duration: 60,
+//     topic: "Introduction to Neural Networks",
+//     status: "confirmed",
+//   },
+//   {
+//     id: "s2",
+//     mentorId: "mentor2",
+//     mentorName: "Michael Chen",
+//     mentorImage: "/placeholder.svg?height=40&width=40",
+//     date: "2023-11-20T10:00:00",
+//     duration: 45,
+//     topic: "React Performance Optimization",
+//     status: "confirmed",
+//   },
+// ]
+
+// // Mock data for recommended mentors
+// const mockRecommendedMentors = [
+//   {
+//     id: "mentor1",
+//     name: "Dr. Sarah Johnson",
+//     role: "AI Research Scientist",
+//     company: "TechInnovate",
+//     image: "/placeholder.svg?height=100&width=100",
+//     rating: 4.9,
+//     reviews: 127,
+//     expertise: ["Machine Learning", "Neural Networks", "Computer Vision"],
+//     matchScore: 98,
+//   },
+//   {
+//     id: "mentor3",
+//     name: "Jessica Williams",
+//     role: "UX Design Director",
+//     company: "DesignCo",
+//     image: "/placeholder.svg?height=100&width=100",
+//     rating: 5.0,
+//     reviews: 156,
+//     expertise: ["UX Strategy", "Design Systems", "User Testing"],
+//     matchScore: 92,
+//   },
+//   {
+//     id: "mentor4",
+//     name: "David Rodriguez",
+//     role: "Engineering Manager",
+//     company: "TechGrowth",
+//     image: "/placeholder.svg?height=100&width=100",
+//     rating: 4.7,
+//     reviews: 84,
+//     expertise: ["Engineering Leadership", "System Architecture", "Team Building"],
+//     matchScore: 85,
+//   },
+// ]
+
+// // Mock data for all mentors
+// const mockAllMentors = [
+//   ...mockRecommendedMentors,
+//   {
+//     id: "mentor2",
+//     name: "Michael Chen",
+//     role: "Senior Product Manager",
+//     company: "ProductSphere",
+//     image: "/placeholder.svg?height=100&width=100",
+//     rating: 4.8,
+//     reviews: 93,
+//     expertise: ["Product Strategy", "User Research", "Roadmapping"],
+//     matchScore: 78,
+//   },
+//   {
+//     id: "mentor5",
+//     name: "Emma Thompson",
+//     role: "Frontend Developer",
+//     company: "WebTech",
+//     image: "/placeholder.svg?height=100&width=100",
+//     rating: 4.6,
+//     reviews: 62,
+//     expertise: ["React", "TypeScript", "CSS Animation"],
+//     matchScore: 75,
+//   },
+//   {
+//     id: "mentor6",
+//     name: "James Wilson",
+//     role: "Data Scientist",
+//     company: "DataCorp",
+//     image: "/placeholder.svg?height=100&width=100",
+//     rating: 4.9,
+//     reviews: 108,
+//     expertise: ["Python", "Data Analysis", "Machine Learning"],
+//     matchScore: 72,
+//   },
+// ]
+
+interface Mentor {
+  id: string
+  name: string
+  role: string
+  company: string
+  image: string
+  rating: number
+  reviews: number
+  expertise: string[]
+  matchScore: number
 }
 
-// Mock data for upcoming sessions
-const mockUpcomingSessions = [
-  {
-    id: "s1",
-    mentorId: "mentor1",
-    mentorName: "Dr. Sarah Johnson",
-    mentorImage: "/placeholder.svg?height=40&width=40",
-    date: "2023-11-15T14:00:00",
-    duration: 60,
-    topic: "Introduction to Neural Networks",
-    status: "confirmed",
-  },
-  {
-    id: "s2",
-    mentorId: "mentor2",
-    mentorName: "Michael Chen",
-    mentorImage: "/placeholder.svg?height=40&width=40",
-    date: "2023-11-20T10:00:00",
-    duration: 45,
-    topic: "React Performance Optimization",
-    status: "confirmed",
-  },
-]
+interface Session {
+  id: string
+  mentorId: string
+  mentorName: string
+  mentorImage: string
+  date: string
+  duration: number
+  topic: string
+  status: string
+}
 
-// Mock data for recommended mentors
-const mockRecommendedMentors = [
-  {
-    id: "mentor1",
-    name: "Dr. Sarah Johnson",
-    role: "AI Research Scientist",
-    company: "TechInnovate",
-    image: "/placeholder.svg?height=100&width=100",
-    rating: 4.9,
-    reviews: 127,
-    expertise: ["Machine Learning", "Neural Networks", "Computer Vision"],
-    matchScore: 98,
-  },
-  {
-    id: "mentor3",
-    name: "Jessica Williams",
-    role: "UX Design Director",
-    company: "DesignCo",
-    image: "/placeholder.svg?height=100&width=100",
-    rating: 5.0,
-    reviews: 156,
-    expertise: ["UX Strategy", "Design Systems", "User Testing"],
-    matchScore: 92,
-  },
-  {
-    id: "mentor4",
-    name: "David Rodriguez",
-    role: "Engineering Manager",
-    company: "TechGrowth",
-    image: "/placeholder.svg?height=100&width=100",
-    rating: 4.7,
-    reviews: 84,
-    expertise: ["Engineering Leadership", "System Architecture", "Team Building"],
-    matchScore: 85,
-  },
-]
-
-// Mock data for all mentors
-const mockAllMentors = [
-  ...mockRecommendedMentors,
-  {
-    id: "mentor2",
-    name: "Michael Chen",
-    role: "Senior Product Manager",
-    company: "ProductSphere",
-    image: "/placeholder.svg?height=100&width=100",
-    rating: 4.8,
-    reviews: 93,
-    expertise: ["Product Strategy", "User Research", "Roadmapping"],
-    matchScore: 78,
-  },
-  {
-    id: "mentor5",
-    name: "Emma Thompson",
-    role: "Frontend Developer",
-    company: "WebTech",
-    image: "/placeholder.svg?height=100&width=100",
-    rating: 4.6,
-    reviews: 62,
-    expertise: ["React", "TypeScript", "CSS Animation"],
-    matchScore: 75,
-  },
-  {
-    id: "mentor6",
-    name: "James Wilson",
-    role: "Data Scientist",
-    company: "DataCorp",
-    image: "/placeholder.svg?height=100&width=100",
-    rating: 4.9,
-    reviews: 108,
-    expertise: ["Python", "Data Analysis", "Machine Learning"],
-    matchScore: 72,
-  },
-]
+interface Profile {
+  id: string
+  name: string
+  email: string
+  interests: string[]
+  goals: string
+  preferredLanguages: string[]
+  profilePicture: string
+}
 
 export default function MenteeDashboard() {
-  const [profile, setProfile] = useState(mockMenteeProfile)
-  const [upcomingSessions, setUpcomingSessions] = useState(mockUpcomingSessions)
-  const [recommendedMentors, setRecommendedMentors] = useState(mockRecommendedMentors)
-  const [allMentors, setAllMentors] = useState(mockAllMentors)
+  const [profile, setProfile] = useState<Profile>({
+    id: "",
+    name: "",
+    email: "",
+    interests: [],
+    goals: "",
+    preferredLanguages: [],
+    profilePicture: "",
+
+  })
+  const [upcomingSessions, setUpcomingSessions] = useState<Session[]>([])
+  const [recommendedMentors, setRecommendedMentors] = useState<Mentor[]>([])
+  const [allMentors, setAllMentors] = useState<Mentor[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedSkills, setSelectedSkills] = useState<string[]>([])
-  const [filteredMentors, setFilteredMentors] = useState(mockAllMentors)
+  const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([])
   const { toast } = useToast()
 
   // Simulate fetching data
@@ -151,15 +194,14 @@ export default function MenteeDashboard() {
     const fetchData = async () => {
       try {
         // In a real app, these would be actual API calls
-        // const profileResponse = await axios.get('/api/mentee/profile');
-        // const sessionsResponse = await axios.get('/api/mentee/sessions');
-        // const recommendedResponse = await axios.get(`/api/match/${mockMenteeProfile.id}`);
-        // const allMentorsResponse = await axios.get('/api/mentors');
+        const sessionsResponse = await axios.get('/api/mentee/sessions');
+        const recommendedResponse = await axios.get(`/api/match/${profile.id}`);
+        const allMentorsResponse = await axios.get('/api/mentors');
 
-        // setProfile(profileResponse.data);
-        // setUpcomingSessions(sessionsResponse.data);
-        // setRecommendedMentors(recommendedResponse.data);
-        // setAllMentors(allMentorsResponse.data);
+    
+        setUpcomingSessions(sessionsResponse.data);
+        setRecommendedMentors(recommendedResponse.data);
+        setAllMentors(allMentorsResponse.data);
 
         // Simulate API delay
         setTimeout(() => {
@@ -243,12 +285,15 @@ export default function MenteeDashboard() {
     <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 pt-24 pb-16">
       <header className="absolute top-4 left-0 w-full h-14 bg-gray-900/50 backdrop-blur-sm z-10">
             <div className="container mx-auto px-4 flex items-center justify-between">
-              <Link href="/" passHref>
-                <div className="flex items-center space-x-2 cursor-pointer">
-                  <img src="/logo.png" alt="Logo" className="h-8 w-8" />
-                  <h1 className="text-2xl font-bold">ConnectEd</h1>
-                </div>
-              </Link>
+             <Link href="/" className="flex items-center gap-2 z-50">
+            <div className="relative w-10 h-10">
+              <div className="absolute inset-0 bg-cyan-500 rounded-full blur-md opacity-70"></div>
+              <div className="relative flex items-center justify-center w-full h-full bg-gray-900 rounded-full border border-cyan-500 z-10">
+                <span className="font-bold text-cyan-500">C</span>
+              </div>
+            </div>
+            <span className="font-bold text-xl">ConnectEd</span>
+          </Link>
               <div className="flex items-center space-x-4">
                 <Link href="/" passHref>
                   <Button variant="outline" className="border-cyan-500 text-cyan-500 hover:bg-cyan-950">

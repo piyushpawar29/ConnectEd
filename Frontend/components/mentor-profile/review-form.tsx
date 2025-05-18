@@ -45,14 +45,14 @@ export default function ReviewForm({ mentorId, onSuccess }: ReviewFormProps) {
 
     try {
       // In a real app, this would be an API call
-      // const response = await fetch(`/api/reviews/${mentorId}`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ rating, comment })
-      // })
+      const response = await fetch(`/api/reviews/${mentorId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating, comment })
+      })
 
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // await new Promise((resolve) => setTimeout(resolve, 1000))
 
       toast({
         title: "Review submitted",

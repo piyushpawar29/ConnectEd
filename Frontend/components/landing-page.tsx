@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
@@ -8,9 +7,6 @@ import {
   Users,
   Video,
   Calendar,
-  Twitter,
-  Linkedin,
-  Instagram,
   Menu,
   X,
   Sparkles,
@@ -24,7 +20,6 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import AuthModal from "@/components/auth-modal"
-import MentorSpotlight from "@/components/mentor-spotlight"
 import BackgroundScene from "@/components/background-scene"
 
 
@@ -33,8 +28,6 @@ export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authType, setAuthType] = useState<"login" | "signup">("login")
-  const [theme, setTheme] = useState<"light" | "dark">("dark")
-  const [showChatWidget, setShowChatWidget] = useState(false)
 
   // Handle scroll events
   useEffect(() => {
@@ -52,7 +45,6 @@ export default function LandingPage() {
       const headerOffset = 80
       const elementPosition = element.getBoundingClientRect().top
       const offsetPosition = elementPosition + window.pageYOffset - headerOffset
-
       window.scrollTo({
         top: offsetPosition,
         behavior: "smooth",
@@ -114,21 +106,21 @@ export default function LandingPage() {
               How It Works
             </Link>
             <Link
-              href="#mentors"
+              href="#cta"
               onClick={(e) => {
                 e.preventDefault()
-                scrollToSection("mentors")
+                scrollToSection("cta")
               }}
               className="text-gray-300 hover:text-white transition-colors"
             >
               Get Started
-            </Link> 
-            <Link href="/dashboard/mentor" className="text-gray-300 hover:text-white transition-colors">
+            </Link>
+            {/* <Link href="/dashboard/mentor" className="text-gray-300 hover:text-white transition-colors">
               Mentor Dashboard
             </Link>
             <Link href="/dashboard/mentee" className="text-gray-300 hover:text-white transition-colors">
               Mentee Dashboard
-            </Link>
+            </Link> */}
           </nav>
 
           <div className="flex items-center gap-4 z-50">
@@ -189,14 +181,14 @@ export default function LandingPage() {
                   How It Works
                 </Link>
                 <Link
-                  href="#mentors"
+                  href="#cta"
                   onClick={(e) => {
                     e.preventDefault()
-                    scrollToSection("mentors")
+                    scrollToSection("cta")
                   }}
                   className="text-xl py-3 border-b border-gray-800 text-gray-300 hover:text-white transition-colors"
                 >
-                  Mentors
+                  Get Started
                 </Link>
                 <Link
                   href="/dashboard/mentor"
@@ -331,7 +323,7 @@ export default function LandingPage() {
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-2xl blur-xl"></div>
                 <Image
-                  src="/hero-section.png?height=500&width=600"
+                  src="/hero-section.png?height=600&width=600"
                   width={600}
                   height={500}
                   alt="AI Mentorship Illustration"
@@ -386,7 +378,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-gray-950 relative">
+      <section id="features" className="py-20  relative">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <Badge className="mb-4 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors">
@@ -463,13 +455,13 @@ export default function LandingPage() {
                   <div className="relative">
                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-xl blur-lg"></div>
                     <Image
-                      src="/ai-feature.jpg?height=300&width=400&text=AI+Matching"
+                      src="/ai-feature.webp?height=500&width=200&text=AI+Matching"
                       width={400}
                       height={300}
                       alt="AI Matching"
                       className="relative z-10 rounded-xl w-full"
                     />
-                  </div>
+                  </div> 
                 </div>
               </TabsContent>
 
@@ -510,7 +502,7 @@ export default function LandingPage() {
                   <div className="relative">
                     <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl blur-lg"></div>
                     <Image
-                      src="/placeholder.svg?height=300&width=400&text=Video+Sessions"
+                      src="/video-feature.jpg?height=300&width=400&text=Video+Sessions"
                       width={400}
                       height={300}
                       alt="Video Sessions"
@@ -557,7 +549,7 @@ export default function LandingPage() {
                   <div className="relative">
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-green-500/20 rounded-xl blur-lg"></div>
                     <Image
-                      src="/placeholder.svg?height=300&width=400&text=Booking+System"
+                      src="/schedule-feature.webp?height=300&width=400&text=Booking+System"
                       width={400}
                       height={300}
                       alt="Booking System"
@@ -790,7 +782,7 @@ export default function LandingPage() {
       </section> */}
 
       {/* Final CTA Section */}
-      <section className="py-20 bg-gray-950 relative overflow-hidden">
+      <section id="cta" className="py-20 bg-gray-950 relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-600/10 rounded-full filter blur-3xl"></div>
           <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full filter blur-3xl"></div>

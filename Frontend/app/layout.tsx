@@ -27,8 +27,7 @@ export const metadata: Metadata = {
     ],
     locale: "en_US",
     type: "website",
-  },
-    generator: 'v0.dev'
+  }
 }
 
 export default function RootLayout({

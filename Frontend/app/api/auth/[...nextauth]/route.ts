@@ -2,17 +2,18 @@ import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
 import GithubProvider from "next-auth/providers/github"
+import { useState } from "react"
 
-// Mock user database
-const users = [
-  {
-    id: "1",
-    name: "Demo User",
-    email: "user@example.com",
-    password: "password123",
-    image: "/placeholder.svg?height=80&width=80",
-  },
-]
+interface User {
+  id: string
+  name: string
+  email: string
+  image: string
+  password: string
+}
+
+const [users,SetUsers] = useState<User[]>([])
+  
 
 const handler = NextAuth({
   providers: [
@@ -43,14 +44,14 @@ const handler = NextAuth({
         return null
       },
     }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "mock-client-id",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "mock-client-secret",
-    }),
-    GithubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID || "mock-client-id",
-      clientSecret: process.env.GITHUB_CLIENT_SECRET || "mock-client-secret",
-    }),
+    // GoogleProvider({
+    //   clientId: process.env.GOOGLE_CLIENT_ID || "mock-client-id",
+    //   clientSecret: process.env.GOOGLE_CLIENT_SECRET || "mock-client-secret",
+    // }),
+    // GithubProvider({
+    //   clientId: process.env.GITHUB_CLIENT_ID || "mock-client-id",
+    //   clientSecret: process.env.GITHUB_CLIENT_SECRET || "mock-client-secret",
+    // }),
   ],
   session: {
     strategy: "jwt",

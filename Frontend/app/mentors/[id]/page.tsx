@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   )
 
   return {
-    title: `${mentor?.name || "Mentor"} | MentorAI Platform`,
+    title: `${mentor?.name || "Mentor"} | ConnectEd Platform`,
     description: mentor?.bio || "Connect with expert mentors through our AI-powered matching platform.",
     openGraph: {
       images: [mentor?.image || "/placeholder.svg?height=400&width=300"],
