@@ -2,7 +2,7 @@ import axios from "axios"
 
 // Create an axios instance with default config
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -47,55 +47,60 @@ api.interceptors.response.use(
   },
 )
 
-// API endpoints
-export const mentorApi = {
-  // Get all mentors with optional filters
-  getMentors: (filters = {}) => api.get("/mentors", { params: filters }),
-
-  // Get a specific mentor by ID
-  getMentorById: (id: string) => api.get(`/mentors/${id}`),
-
-  // Search mentors by query
-  searchMentors: (query: string) => api.get("/mentors/search", { params: { query } }),
-
-  // Get mentor availability
-  getMentorAvailability: (id: string, startDate: string, endDate: string) =>
-    api.get(`/mentors/${id}/availability`, { params: { startDate, endDate } }),
+// Authentication APIs
+export const authAPI = {
+  register: (userData: any) => api.post("/auth/register", userData),
+  login: (credentials: { email: string; password: string }) => api.post("/auth/login", credentials),
+  logout: () => api.get("/auth/logout"),
+  getProfile: () => api.get("/auth/me"),
+  updateProfile: (data: any) => api.put("/auth/updatedetails", data),
+  updatePassword: (data: { currentPassword: string; newPassword: string }) => 
+    api.put("/auth/updatepassword", data),
 }
 
-export const sessionApi = {
-  // Book a session with a mentor
-  bookSession: (data: any) => api.post("/sessions", data),
-
-  // Get user's upcoming sessions
-  getUpcomingSessions: () => api.get("/sessions/upcoming"),
-
-  // Get user's past sessions
-  getPastSessions: () => api.get("/sessions/past"),
-
-  // Cancel a session
-  cancelSession: (id: string) => api.delete(`/sessions/${id}`),
-
-  // Reschedule a session
-  rescheduleSession: (id: string, data: any) => api.put(`/sessions/${id}/reschedule`, data),
+// Mentor APIs
+export const mentorAPI = {
+  getAllMentors: (params?: any) => api.get("/mentors", { params }),
+  getMentor: (id: string) => api.get(`/mentors/${id}`),
+  getMentorProfile: () => api.get("/mentors/profile"),
+  updateMentorProfile: (data: any) => api.put("/mentors/profile", data),
+  getMentorReviews: (mentorId: string) => api.get(`/mentors/${mentorId}/reviews`),
 }
 
-export const userApi = {
-  // Register a new user
-  register: (data: any) => api.post("/auth/register", data),
+// Mentee APIs
+export const menteeAPI = {
+  getMenteeProfile: () => api.get("/mentees/profile"),
+  updateMenteeProfile: (data: any) => api.put("/mentees/profile", data),
+  getConnectedMentors: () => api.get("/mentees/mentors"),
+  connectWithMentor: (mentorId: string) => api.post(`/mentees/connect/${mentorId}`),
+  disconnectFromMentor: (mentorId: string) => api.delete(`/mentees/disconnect/${mentorId}`),
+}
 
-  // Login user
-  login: (email: string, password: string) => api.post("/auth/login", { email, password }),
+// Session APIs
+export const sessionAPI = {
+  getSessions: () => api.get("/sessions"),
+  getSession: (id: string) => api.get(`/sessions/${id}`),
+  createSession: (data: any) => api.post("/sessions", data),
+  updateSession: (id: string, data: any) => api.put(`/sessions/${id}`, data),
+  deleteSession: (id: string) => api.delete(`/sessions/${id}`),
+  updateSessionStatus: (id: string, status: string) => 
+    api.put(`/sessions/${id}/status`, { status }),
+}
 
-  // Get current user profile
-  getProfile: () => api.get("/users/me"),
+// Review APIs
+export const reviewAPI = {
+  addReview: (mentorId: string, data: any) => api.post(`/mentors/${mentorId}/reviews`, data),
+  updateReview: (id: string, data: any) => api.put(`/reviews/${id}`, data),
+  deleteReview: (id: string) => api.delete(`/reviews/${id}`),
+}
 
-  // Update user profile
-  updateProfile: (data: any) => api.put("/users/me", data),
-
-  // Change password
-  changePassword: (currentPassword: string, newPassword: string) =>
-    api.put("/users/me/password", { currentPassword, newPassword }),
+// Message APIs
+export const messageAPI = {
+  getConversations: () => api.get("/messages/conversations"),
+  getMessages: (userId: string) => api.get(`/messages/${userId}`),
+  sendMessage: (data: any) => api.post("/messages", data),
+  deleteMessage: (id: string) => api.delete(`/messages/${id}`),
+  getUnreadCount: () => api.get("/messages/unread"),
 }
 
 export default api

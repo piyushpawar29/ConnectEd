@@ -1,7 +1,5 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import GoogleProvider from "next-auth/providers/google"
-import GithubProvider from "next-auth/providers/github"
 import { useState } from "react"
 
 interface User {
@@ -61,11 +59,11 @@ const handler = NextAuth({
   },
   callbacks: {
     async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id
-      }
-      return token
-    },
+  if (user) {
+    token.id = (user as { id: string }).id;
+  }
+  return token;
+},
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string

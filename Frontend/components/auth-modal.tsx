@@ -75,18 +75,34 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
 
     try {
       if (type === "login") {
-        // Sign in with credentials
-        const result = await signIn("credentials", {
-          redirect: false,
-          email,
-          password,
-        })
+        try {
+          const res = await fetch("http://localhost:5000/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          })
 
-        if (result?.error) {
-          setError("Invalid email or password")
-        } else {
+          const data = await res.json()
+
+          if (!res.ok) {
+            throw new Error(data.message || "Invalid email or password")
+          }
+
+          // Store token in localStorage
+          if (data.token) {
+            localStorage.setItem('token', data.token);
+          }
+
           onClose()
-          router.refresh()
+          
+          // Redirect based on user role
+          if (data.user.role === 'mentor') {
+            router.push('/dashboard/mentor')
+          } else {
+            router.push('/dashboard/mentee')
+          }
+        } catch (error: any) {
+          setError(error.message || "Invalid email or password")
         }
       } else {
         const userData = {
@@ -95,12 +111,28 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
           password,
           role: userRole,
           ...(userRole === "mentor"
-            ? { bio, skills, experience, languages, communicationPreference }
-            : { interests, goals, preferredLanguages }),
+            ? { 
+                bio, 
+                skills, 
+                experience, 
+                languages, 
+                communicationPreference,
+                company: experience.split(' at ')[1] || 'Independent',
+                hourlyRate: 50, // Default value
+                category: skills[0] || 'Technology', // Default category based on first skill
+                expertise: skills
+              }
+            : { 
+                interests, 
+                goals, 
+                preferredLanguages,
+                educationLevel: 'Other',
+                preferredCommunication: 'Any'
+              }),
         }
 
         try {
-          const res = await fetch("/api/register", {
+          const res = await fetch("http://localhost:5000/api/auth/register", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(userData),
@@ -110,6 +142,11 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
 
           if (!res.ok) {
             throw new Error(data.message || "Failed to register user")
+          }
+
+          // Store token in localStorage
+          if (data.token) {
+            localStorage.setItem('token', data.token);
           }
 
           // On success
