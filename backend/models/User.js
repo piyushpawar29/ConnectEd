@@ -28,14 +28,6 @@ const UserSchema = new mongoose.Schema({
     enum: ['mentee', 'mentor', 'admin'],
     default: 'mentee'
   },
-  avatar: {
-    type: String,
-    default: 'default-avatar.jpg'
-  },
-  bio: {
-    type: String,
-    default: ''
-  },
   createdAt: {
     type: Date,
     default: Date.now
