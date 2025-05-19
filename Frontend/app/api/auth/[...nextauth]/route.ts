@@ -1,6 +1,16 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { useState } from "react"
+import type { DefaultSession } from "next-auth"
+
+// Extend the types
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string
+    } & DefaultSession["user"]
+  }
+}
 
 interface User {
   id: string
