@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import axios from 'axios';
 
 // Mock data for mentors
 // const mentors = [
@@ -61,7 +62,7 @@ import { NextResponse } from "next/server"
 // ]
 
 interface Mentor {
-  id: number
+  id: string
   name: string
   role: string
   company: string
@@ -73,11 +74,10 @@ interface Mentor {
   bio: string
   availability: string
   category: string
+  matchScore?: number
 }
 
 export async function GET(request: Request) {
-
-  const mentors: Mentor[] = []
   // Get URL and search params
   const { searchParams } = new URL(request.url)
 
@@ -88,47 +88,69 @@ export async function GET(request: Request) {
   const availability = searchParams.get("availability")
   const query = searchParams.get("query")?.toLowerCase()
 
-  // Apply filters
-  let filteredMentors = [...mentors]
+  try {
+    // Get authorization header from request
+    const authHeader = request.headers.get('authorization');
+    
+    // Fetch mentors from the backend API
+    const response = await axios.get(`${process.env.BACKEND_URL}/api/mentors`, {
+      headers: authHeader ? { 'Authorization': authHeader } : {}
+    });
 
-  if (category) {
-    filteredMentors = filteredMentors.filter((mentor) => mentor.category.toLowerCase() === category.toLowerCase())
+    let backendMentors = response.data.data || [];
+
+    // Transform the data to match the frontend structure
+    const mentors = backendMentors.map((mentor: any) => ({
+      id: mentor._id || mentor.id || '',
+      name: mentor.name || mentor.user?.name || '',
+      role: mentor.title || mentor.role || "Mentor",
+      company: mentor.company || "",
+      image: mentor.avatar || mentor.user?.avatar || "/placeholder.svg?height=100&width=100",
+      rating: mentor.rating || 4.5,
+      reviews: mentor.reviews || 0,
+      hourlyRate: mentor.hourlyRate || 50,
+      expertise: mentor.skills || mentor.expertise || [],
+      bio: mentor.bio || "",
+      availability: mentor.availability || "Flexible",
+      category: mentor.category || "Technology"
+    }));
+
+    // Apply filters if provided
+    let filteredMentors = [...mentors];
+
+    if (category) {
+      filteredMentors = filteredMentors.filter((mentor) => mentor.category === category)
+    }
+
+    if (minPrice) {
+      filteredMentors = filteredMentors.filter((mentor) => mentor.hourlyRate >= Number(minPrice))
+    }
+
+    if (maxPrice) {
+      filteredMentors = filteredMentors.filter((mentor) => mentor.hourlyRate <= Number(maxPrice))
+    }
+
+    if (availability) {
+      filteredMentors = filteredMentors.filter((mentor) => mentor.availability === availability)
+    }
+
+    if (query) {
+      filteredMentors = filteredMentors.filter(
+        (mentor) =>
+          mentor.name?.toLowerCase().includes(query) ||
+          mentor.role?.toLowerCase().includes(query) ||
+          mentor.company?.toLowerCase().includes(query) ||
+          mentor.bio?.toLowerCase().includes(query) ||
+          mentor.expertise?.some((skill: string) => skill.toLowerCase().includes(query))
+      )
+    }
+
+    return NextResponse.json({ mentors: filteredMentors })
+  } catch (error) {
+    console.error("Error fetching mentors:", error);
+    
+    // Return empty array on error to prevent rendering issues
+    return NextResponse.json({ mentors: [] });
   }
-
-  if (minPrice) {
-    filteredMentors = filteredMentors.filter((mentor) => mentor.hourlyRate >= Number.parseInt(minPrice))
-  }
-
-  if (maxPrice) {
-    filteredMentors = filteredMentors.filter((mentor) => mentor.hourlyRate <= Number.parseInt(maxPrice))
-  }
-
-  if (availability) {
-    filteredMentors = filteredMentors.filter((mentor) =>
-      mentor.availability.toLowerCase().includes(availability.toLowerCase()),
-    )
-  }
-
-  if (query) {
-    filteredMentors = filteredMentors.filter(
-      (mentor) =>
-        mentor.name.toLowerCase().includes(query) ||
-        mentor.role.toLowerCase().includes(query) ||
-        mentor.company.toLowerCase().includes(query) ||
-        mentor.expertise.some((skill) => skill.toLowerCase().includes(query)) ||
-        mentor.bio.toLowerCase().includes(query),
-    )
-  }
-
-  // Add artificial delay to simulate network latency
-  await new Promise((resolve) => setTimeout(resolve, 500))
-
-  // Return filtered mentors
-  return NextResponse.json({
-    mentors: filteredMentors,
-    total: filteredMentors.length,
-    page: 1,
-    limit: 10,
-  })
 }
 

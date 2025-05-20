@@ -189,24 +189,62 @@ export default function MenteeDashboard() {
   const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([])
   const { toast } = useToast()
 
-  // Simulate fetching data
+  // Fetch data from API
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // In a real app, these would be actual API calls
-        const sessionsResponse = await axios.get('/api/mentee/sessions');
-        const recommendedResponse = await axios.get(`/api/match/${profile.id}`);
-        const allMentorsResponse = await axios.get('/api/mentors');
+        setLoading(true);
+        
+        // Get token from localStorage
+        let token = null;
+        if (typeof window !== 'undefined') {
+          token = localStorage.getItem('token');
+        }
+        
+        if (!token) {
+          toast({
+            title: "Authentication Error",
+            description: "Please log in again to continue.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
 
-    
+        const headers = {
+          Authorization: `Bearer ${token}`
+        };
+
+        // Get mentee profile first
+        const profileResponse = await axios.get('/api/auth/me', { headers });
+        const menteeData = profileResponse.data;
+        
+        if (menteeData) {
+          setProfile({
+            id: menteeData.id || menteeData.data?.user?._id || "",
+            name: menteeData.name || menteeData.data?.user?.name || "",
+            email: menteeData.email || menteeData.data?.user?.email || "",
+            interests: menteeData.interests || menteeData.data?.profile?.interests || [],
+            goals: menteeData.goals || menteeData.data?.profile?.goals || "",
+            preferredLanguages: menteeData.preferredLanguages || menteeData.data?.profile?.preferredLanguages || [],
+            profilePicture: menteeData.avatar || menteeData.data?.user?.avatar || "",
+          });
+        }
+        
+        // Fetch mentee sessions with auth header
+        const sessionsResponse = await axios.get('/api/mentee/sessions', { headers });
         setUpcomingSessions(sessionsResponse.data);
+        
+        // Fetch recommended mentors based on mentee's profile
+        const userID = menteeData?.id || menteeData.data?.user?._id || 'default';
+        const recommendedResponse = await axios.get(`/api/match/${userID}`, { headers });
         setRecommendedMentors(recommendedResponse.data);
-        setAllMentors(allMentorsResponse.data);
-
-        // Simulate API delay
-        setTimeout(() => {
-          setLoading(false)
-        }, 1000)
+        
+        // Fetch all available mentors
+        const allMentorsResponse = await axios.get('/api/mentors', { headers });
+        setAllMentors(allMentorsResponse.data.mentors || []);
+        
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error)
         toast({
@@ -335,8 +373,8 @@ export default function MenteeDashboard() {
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3">
                           <Avatar>
-                            <AvatarImage src={session.mentorImage} alt={session.mentorName} />
-                            <AvatarFallback>{session.mentorName.charAt(0)}</AvatarFallback>
+                            <AvatarImage src={session.mentorImage} alt={session.mentorName || 'Mentor'} />
+                            <AvatarFallback>{session.mentorName ? session.mentorName.charAt(0) : 'M'}</AvatarFallback>
                           </Avatar>
                           <div>
                             <h4 className="font-medium">{session.mentorName}</h4>
@@ -431,8 +469,8 @@ export default function MenteeDashboard() {
                             <div className="relative">
                               <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-full blur-md opacity-70"></div>
                               <Avatar className="h-16 w-16 border-2 border-gray-700">
-                                <AvatarImage src={mentor.image} alt={mentor.name} />
-                                <AvatarFallback>{mentor.name.charAt(0)}</AvatarFallback>
+                                <AvatarImage src={mentor.image} alt={mentor.name || 'Mentor'} />
+                                <AvatarFallback>{mentor.name ? mentor.name.charAt(0) : 'M'}</AvatarFallback>
                               </Avatar>
                             </div>
                             <div>
@@ -549,8 +587,8 @@ export default function MenteeDashboard() {
                               <div className="relative">
                                 <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-full blur-md opacity-70"></div>
                                 <Avatar className="h-16 w-16 border-2 border-gray-700">
-                                  <AvatarImage src={mentor.image} alt={mentor.name} />
-                                  <AvatarFallback>{mentor.name.charAt(0)}</AvatarFallback>
+                                  <AvatarImage src={mentor.image} alt={mentor.name || 'Mentor'} />
+                                  <AvatarFallback>{mentor.name ? mentor.name.charAt(0) : 'M'}</AvatarFallback>
                                 </Avatar>
                               </div>
                               <div>
