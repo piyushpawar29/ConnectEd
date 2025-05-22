@@ -44,15 +44,21 @@ export default function ReviewForm({ mentorId, onSuccess }: ReviewFormProps) {
     setLoading(true)
 
     try {
-      // In a real app, this would be an API call
-      const response = await fetch(`/api/reviews/${mentorId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rating, comment })
-      })
-
-      // Simulate API call
-      // await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Import the reviewAPI from our utility
+      const { reviewAPI } = await import('@/lib/api');
+      
+      // Use the addReview method
+      const response = await reviewAPI.addReview(mentorId, {
+        rating,
+        comment,
+        mentor: mentorId
+      });
+      
+      console.log("Review submission response:", response.data);
+      
+      if (response.status !== 201 && response.status !== 200) {
+        throw new Error(response.data.message || response.data.error || 'Failed to submit review');
+      }
 
       toast({
         title: "Review submitted",

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import axios from "axios";
+import { RequestCookies } from "next/dist/server/web/spec-extension/cookies";
 
 export async function GET(request: Request) {
   try {
@@ -9,8 +10,10 @@ export async function GET(request: Request) {
     const token = authHeader ? authHeader.split(' ')[1] : null;
     
     // Fall back to cookie if no auth header
+    // Use cookies() synchronously in Next.js API routes
     const cookieStore = cookies();
-    const cookieToken = cookieStore.get("token")?.value;
+    const tokenCookie = (await cookieStore).get("token");
+    const cookieToken = tokenCookie ? tokenCookie.value : null;
     
     // Use either token source
     const authToken = token || cookieToken;
@@ -32,16 +35,10 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("Error fetching user profile:", error);
     
-    // Return a mock user for development if the API fails
-    return NextResponse.json({
-      id: "user123",
-      name: "Alex Johnson",
-      email: "alex.johnson@example.com",
-      role: "mentee",
-      avatar: "/placeholder.svg?height=200&width=200",
-      interests: ["Machine Learning", "Web Development", "UX Design"],
-      goals: "I want to transition from a software developer role to a machine learning engineer position within the next year.",
-      preferredLanguages: ["English", "Spanish"]
-    });
+    // Return an error response instead of mock data
+    return NextResponse.json(
+      { success: false, error: "Failed to fetch user profile. Please try again." },
+      { status: 500 }
+    );
   }
 } 

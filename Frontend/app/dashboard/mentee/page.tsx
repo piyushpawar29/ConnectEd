@@ -25,116 +25,7 @@ import {
 } from "lucide-react"
 import axios from "axios"
 
-// // Mock data for the mentee profile
-// const mockMenteeProfile = {
-//   id: "mentee123",
-//   name: "Alex Johnson",
-//   email: "alex.johnson@example.com",
-//   interests: ["Machine Learning", "Web Development", "UX Design"],
-//   goals:
-//     "I want to transition from a software developer role to a machine learning engineer position within the next year.",
-//   preferredLanguages: ["English", "Spanish"],
-//   profilePicture: "/placeholder.svg?height=200&width=200",
-// }
-
-// // Mock data for upcoming sessions
-// const mockUpcomingSessions = [
-//   {
-//     id: "s1",
-//     mentorId: "mentor1",
-//     mentorName: "Dr. Sarah Johnson",
-//     mentorImage: "/placeholder.svg?height=40&width=40",
-//     date: "2023-11-15T14:00:00",
-//     duration: 60,
-//     topic: "Introduction to Neural Networks",
-//     status: "confirmed",
-//   },
-//   {
-//     id: "s2",
-//     mentorId: "mentor2",
-//     mentorName: "Michael Chen",
-//     mentorImage: "/placeholder.svg?height=40&width=40",
-//     date: "2023-11-20T10:00:00",
-//     duration: 45,
-//     topic: "React Performance Optimization",
-//     status: "confirmed",
-//   },
-// ]
-
-// // Mock data for recommended mentors
-// const mockRecommendedMentors = [
-//   {
-//     id: "mentor1",
-//     name: "Dr. Sarah Johnson",
-//     role: "AI Research Scientist",
-//     company: "TechInnovate",
-//     image: "/placeholder.svg?height=100&width=100",
-//     rating: 4.9,
-//     reviews: 127,
-//     expertise: ["Machine Learning", "Neural Networks", "Computer Vision"],
-//     matchScore: 98,
-//   },
-//   {
-//     id: "mentor3",
-//     name: "Jessica Williams",
-//     role: "UX Design Director",
-//     company: "DesignCo",
-//     image: "/placeholder.svg?height=100&width=100",
-//     rating: 5.0,
-//     reviews: 156,
-//     expertise: ["UX Strategy", "Design Systems", "User Testing"],
-//     matchScore: 92,
-//   },
-//   {
-//     id: "mentor4",
-//     name: "David Rodriguez",
-//     role: "Engineering Manager",
-//     company: "TechGrowth",
-//     image: "/placeholder.svg?height=100&width=100",
-//     rating: 4.7,
-//     reviews: 84,
-//     expertise: ["Engineering Leadership", "System Architecture", "Team Building"],
-//     matchScore: 85,
-//   },
-// ]
-
-// // Mock data for all mentors
-// const mockAllMentors = [
-//   ...mockRecommendedMentors,
-//   {
-//     id: "mentor2",
-//     name: "Michael Chen",
-//     role: "Senior Product Manager",
-//     company: "ProductSphere",
-//     image: "/placeholder.svg?height=100&width=100",
-//     rating: 4.8,
-//     reviews: 93,
-//     expertise: ["Product Strategy", "User Research", "Roadmapping"],
-//     matchScore: 78,
-//   },
-//   {
-//     id: "mentor5",
-//     name: "Emma Thompson",
-//     role: "Frontend Developer",
-//     company: "WebTech",
-//     image: "/placeholder.svg?height=100&width=100",
-//     rating: 4.6,
-//     reviews: 62,
-//     expertise: ["React", "TypeScript", "CSS Animation"],
-//     matchScore: 75,
-//   },
-//   {
-//     id: "mentor6",
-//     name: "James Wilson",
-//     role: "Data Scientist",
-//     company: "DataCorp",
-//     image: "/placeholder.svg?height=100&width=100",
-//     rating: 4.9,
-//     reviews: 108,
-//     expertise: ["Python", "Data Analysis", "Machine Learning"],
-//     matchScore: 72,
-//   },
-// ]
+// Interface definitions for the data structures used in this component
 
 interface Mentor {
   id: string
@@ -215,34 +106,66 @@ export default function MenteeDashboard() {
           Authorization: `Bearer ${token}`
         };
 
-        // Get mentee profile first
-        const profileResponse = await axios.get('/api/auth/me', { headers });
-        const menteeData = profileResponse.data;
-        
-        if (menteeData) {
-          setProfile({
-            id: menteeData.id || menteeData.data?.user?._id || "",
-            name: menteeData.name || menteeData.data?.user?.name || "",
-            email: menteeData.email || menteeData.data?.user?.email || "",
-            interests: menteeData.interests || menteeData.data?.profile?.interests || [],
-            goals: menteeData.goals || menteeData.data?.profile?.goals || "",
-            preferredLanguages: menteeData.preferredLanguages || menteeData.data?.profile?.preferredLanguages || [],
-            profilePicture: menteeData.avatar || menteeData.data?.user?.avatar || "",
+        try {
+          // Get mentee profile first
+          const profileResponse = await axios.get('/api/auth/me', { headers });
+          const menteeData = profileResponse.data;
+          
+          if (menteeData && (menteeData.success !== false)) {
+            setProfile({
+              id: menteeData.id || menteeData.data?.user?._id || "",
+              name: menteeData.name || menteeData.data?.user?.name || "",
+              email: menteeData.email || menteeData.data?.user?.email || "",
+              interests: menteeData.interests || menteeData.data?.profile?.interests || [],
+              goals: menteeData.goals || menteeData.data?.profile?.goals || "",
+              preferredLanguages: menteeData.preferredLanguages || menteeData.data?.profile?.preferredLanguages || [],
+              profilePicture: menteeData.avatar || menteeData.data?.user?.avatar || "",
+            });
+          } else {
+            throw new Error(menteeData?.error || "Failed to load profile data");
+          }
+        } catch (profileError) {
+          console.error("Error fetching profile:", profileError);
+          toast({
+            title: "Profile Error",
+            description: "Could not load your profile. Please try again.",
+            variant: "destructive",
           });
         }
         
-        // Fetch mentee sessions with auth header
-        const sessionsResponse = await axios.get('/api/mentee/sessions', { headers });
-        setUpcomingSessions(sessionsResponse.data);
+        try {
+          // Fetch mentee sessions with auth header
+          const sessionsResponse = await axios.get('/api/mentee/sessions', { headers });
+          if (sessionsResponse.data && Array.isArray(sessionsResponse.data)) {
+            setUpcomingSessions(sessionsResponse.data);
+          }
+        } catch (sessionsError) {
+          console.error("Error fetching sessions:", sessionsError);
+          // Continue with other data fetching even if sessions fail
+        }
         
-        // Fetch recommended mentors based on mentee's profile
-        const userID = menteeData?.id || menteeData.data?.user?._id || 'default';
-        const recommendedResponse = await axios.get(`/api/match/${userID}`, { headers });
-        setRecommendedMentors(recommendedResponse.data);
+        try {
+          // Fetch recommended mentors based on mentee's profile
+          const userID = profile.id || 'default';
+          const recommendedResponse = await axios.get(`/api/match/${userID}`, { headers });
+          if (recommendedResponse.data && Array.isArray(recommendedResponse.data)) {
+            setRecommendedMentors(recommendedResponse.data);
+          }
+        } catch (recommendedError) {
+          console.error("Error fetching recommended mentors:", recommendedError);
+          // Continue with other data fetching even if recommendations fail
+        }
         
-        // Fetch all available mentors
-        const allMentorsResponse = await axios.get('/api/mentors', { headers });
-        setAllMentors(allMentorsResponse.data.mentors || []);
+        try {
+          // Fetch all available mentors
+          const allMentorsResponse = await axios.get('/api/mentors', { headers });
+          if (allMentorsResponse.data && allMentorsResponse.data.mentors) {
+            setAllMentors(allMentorsResponse.data.mentors);
+          }
+        } catch (mentorsError) {
+          console.error("Error fetching all mentors:", mentorsError);
+          // Continue even if all mentors fetch fails
+        }
         
         setLoading(false);
       } catch (error) {
@@ -257,7 +180,7 @@ export default function MenteeDashboard() {
     }
 
     fetchData()
-  }, [toast])
+  }, [toast, profile.id])
 
   // Filter mentors based on search term and selected skills
   useEffect(() => {
@@ -347,8 +270,7 @@ export default function MenteeDashboard() {
                 </Link>
               </div>
             </div>
-      
-            </header>
+          </header>
       <div className="container mx-auto px-4">
         <div className="flex flex-col space-y-6">
           <h1 className="text-3xl font-bold">Mentee Dashboard</h1>
@@ -373,7 +295,7 @@ export default function MenteeDashboard() {
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3">
                           <Avatar>
-                            <AvatarImage src={session.mentorImage} alt={session.mentorName || 'Mentor'} />
+                            {/* <AvatarImage src={session.mentorImage} alt={session.mentorName || 'Mentor'} /> */}
                             <AvatarFallback>{session.mentorName ? session.mentorName.charAt(0) : 'M'}</AvatarFallback>
                           </Avatar>
                           <div>
@@ -469,7 +391,7 @@ export default function MenteeDashboard() {
                             <div className="relative">
                               <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-full blur-md opacity-70"></div>
                               <Avatar className="h-16 w-16 border-2 border-gray-700">
-                                <AvatarImage src={mentor.image} alt={mentor.name || 'Mentor'} />
+                                {/* <AvatarImage src={mentor.image} alt={mentor.name || 'Mentor'} /> */}
                                 <AvatarFallback>{mentor.name ? mentor.name.charAt(0) : 'M'}</AvatarFallback>
                               </Avatar>
                             </div>
@@ -518,7 +440,7 @@ export default function MenteeDashboard() {
                             </div>
                           </div>
 
-                          <Link href={`/mentor/${mentor.id}`} passHref>
+                          <Link href={`/mentors/${mentor.id}`} passHref>
                             <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white">
                               View Profile
                               <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -587,7 +509,7 @@ export default function MenteeDashboard() {
                               <div className="relative">
                                 <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-full blur-md opacity-70"></div>
                                 <Avatar className="h-16 w-16 border-2 border-gray-700">
-                                  <AvatarImage src={mentor.image} alt={mentor.name || 'Mentor'} />
+                                  {/* <AvatarImage src={mentor.image} alt={mentor.name || 'Mentor'} /> */}
                                   <AvatarFallback>{mentor.name ? mentor.name.charAt(0) : 'M'}</AvatarFallback>
                                 </Avatar>
                               </div>
@@ -627,7 +549,7 @@ export default function MenteeDashboard() {
                               </div>
                             </div>
 
-                            <Link href={`/mentor/${mentor.id}`} passHref>
+                            <Link href={`/mentors/${mentor.id}`} passHref>
                               <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white">
                                 View Profile
                                 <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />

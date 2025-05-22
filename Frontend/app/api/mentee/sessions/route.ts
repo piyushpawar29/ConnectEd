@@ -21,8 +21,9 @@ export async function GET(request: Request) {
     // Fallback to cookie if needed
     let token = null;
     if (!authHeader) {
-      const cookieStore = cookies();
-      token = cookieStore.get("token")?.value;
+      const cookieStore = await cookies();
+      const tokenCookie = cookieStore.get("token");
+      token = tokenCookie ? tokenCookie.value : null;
       
       if (!token) {
         return NextResponse.json({ error: "Authentication required" }, { status: 401 });

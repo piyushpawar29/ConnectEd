@@ -17,6 +17,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -142,7 +143,7 @@ import axios from "axios"
 // }
 
 export default function MentorProfilePage() {
-  const params = useParams()
+  const params = useParams() as { id: string }
   const router = useRouter()
   const { toast } = useToast()
   const [mentor, setMentor] = useState<any>(null)
@@ -165,17 +166,30 @@ export default function MentorProfilePage() {
     const fetchMentor = async () => {
       try {
         setLoading(true)
-        // In a real app, this would be an actual API call
-        const response = await axios.get(`/api/mentors/${params.id}`);
+        console.log(`Fetching mentor with ID: ${params.id}`)
+        
+        // Import the mentorAPI from our utility
+        const { mentorAPI } = await import('@/lib/api');
+        
+        // Use our API utility to fetch the mentor
+        const response = await mentorAPI.getMentor(params.id);
+        
+        if (!response.data) {
+          throw new Error('No data received from API');
+        }
+        
+        console.log('Mentor data received:', response.data);
         setMentor(response.data);
-
-        // Simulate API delay
-        setTimeout(() => {
-          // setLoading(false)
-          setLoading(false)
-        }, 1000)
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching mentor:", error)
+        
+        // More detailed error logging
+        if (axios.isAxiosError(error)) {
+          console.error("Status:", error.response?.status);
+          console.error("Data:", error.response?.data);
+        }
+        
         toast({
           title: "Error",
           description: "Failed to load mentor profile. Please try again.",
@@ -200,17 +214,18 @@ export default function MentorProfilePage() {
 
     setBookingLoading(true)
     try {
-      // In a real app, this would be an actual API call
-      const response = await axios.post('/api/bookings', {
-        mentorId: mentor.id,
-        sessionType: selectedSessionType,
-        date: selectedDate,
-        timeSlot: selectedTimeSlot,
-        note: bookingNote,
+      // Import the sessionAPI from our utility
+      const { sessionAPI } = await import('@/lib/api');
+      
+      // Use our API utility to book the session
+      const response = await sessionAPI.bookSession({
+        mentorUserId: mentor.userId, // Using userId instead of ObjectId
+        title: `${selectedSessionType} Session with ${mentor.name}`,
+        description: bookingNote,
+        date: new Date(selectedDate.toDateString() + ' ' + selectedTimeSlot).toISOString(),
+        duration: selectedSessionType === 'text' ? 10080 : 60, // 7 days for text, 60 minutes for other types
+        communicationType: selectedSessionType === 'text' ? 'text' : 'video'
       });
-
-      // // Simulate API delay
-      // await new Promise((resolve) => setTimeout(resolve, 1500))
 
       toast({
         title: "Booking Successful",
@@ -255,14 +270,14 @@ export default function MentorProfilePage() {
 
     setReviewLoading(true)
     try {
-      // In a real app, this would be an actual API call
-      const response = await axios.post(`/api/mentors/${mentor.id}/reviews`, {
+      // Import the reviewAPI from our utility
+      const { reviewAPI } = await import('@/lib/api');
+      
+      // Use our API utility to submit the review
+      const response = await reviewAPI.addReview(mentor.userId || mentor.id, {
         rating: reviewRating,
-        comment: reviewComment,
+        comment: reviewComment
       });
-
-      // Simulate API delay
-      // await new Promise((resolve) => setTimeout(resolve, 1500))
 
       toast({
         title: "Review Submitted",
@@ -378,7 +393,7 @@ export default function MentorProfilePage() {
                     src={mentor.profilePicture || "/placeholder.svg"}
                     width={160}
                     height={160}
-                    alt={mentor.name}
+                    alt={`Profile picture of ${mentor.name}`}
                     className="rounded-full border-2 border-gray-800 object-cover relative z-10"
                   />
                 </div>
@@ -386,7 +401,7 @@ export default function MentorProfilePage() {
                 {/* Name and Title */}
                 <h1 className="text-2xl font-bold mb-1">{mentor.name}</h1>
                 <p className="text-gray-400 mb-4">
-                  {mentor.role} at {mentor.company}
+                  {mentor.role || "Mentor"} {mentor.company ? `at ${mentor.company}` : ""}
                 </p>
 
                 {/* Rating */}
@@ -398,7 +413,7 @@ export default function MentorProfilePage() {
                     />
                   ))}
                   <span className="ml-2 text-gray-300">
-                    {mentor.rating.toFixed(1)} ({mentor.reviewCount} reviews)
+                    {mentor.rating ? mentor.rating.toFixed(1) : '0.0'} ({mentor.reviewCount || 0} reviews)
                   </span>
                 </div>
 
@@ -691,7 +706,7 @@ export default function MentorProfilePage() {
                     <CardContent>
                       <div className="flex flex-col md:flex-row gap-8">
                         <div className="md:w-1/3 flex flex-col items-center justify-center">
-                          <div className="text-5xl font-bold mb-2">{mentor.rating.toFixed(1)}</div>
+                          <div className="text-5xl font-bold mb-2">{mentor.rating ? mentor.rating.toFixed(1) : '0.0'}</div>
                           <div className="flex mb-2">
                             {[...Array(5)].map((_, i) => (
                               <Star
@@ -700,7 +715,7 @@ export default function MentorProfilePage() {
                               />
                             ))}
                           </div>
-                          <p className="text-gray-400">{mentor.reviewCount} reviews</p>
+                          <p className="text-gray-400">{mentor.reviewCount || 0} reviews</p>
                         </div>
 
                         <div className="md:w-2/3">
@@ -758,7 +773,7 @@ export default function MentorProfilePage() {
 
                       {mentor.reviews.length > 3 && !showAllReviews && (
                         <Button variant="link" className="text-sm" onClick={() => setShowAllReviews(true)}>
-                          Show All Reviews ({mentor.reviewCount})
+                          Show All Reviews ({mentor.reviewCount || 0})
                         </Button>
                       )}
 

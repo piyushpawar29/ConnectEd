@@ -825,13 +825,7 @@ export default function LandingPage() {
                   <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </span>
               </Button>
-              <Button
-                variant="outline"
-                className="border-2 border-white/20 hover:border-white/40 text-white px-8 py-6 text-lg"
-                onClick={() => scrollToSection("how-it-works")}
-              >
-                Learn More
-              </Button>
+             
             </motion.div>
           </div>
         </div>

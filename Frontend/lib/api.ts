@@ -8,6 +8,37 @@ const api = axios.create({
   },
 })
 
+// Create a separate instance for frontend API routes
+const frontendApi = axios.create({
+  baseURL: "/api",
+  headers: {
+    "Content-Type": "application/json",
+  },
+})
+
+// Add the same request interceptor to frontendApi
+frontendApi.interceptors.request.use(
+  (config) => {
+    // Get token from localStorage if in browser environment
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token")
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+        
+        // Also ensure token is set in cookie for server-side API routes
+        const cookieExists = document.cookie.split(';').some(item => item.trim().startsWith('token='))
+        if (!cookieExists) {
+          document.cookie = `token=${token}; path=/; max-age=${60 * 60 * 24 * 7}` // 7 days
+        }
+      }
+    }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  },
+)
+
 // Add a request interceptor
 api.interceptors.request.use(
   (config) => {
@@ -16,6 +47,12 @@ api.interceptors.request.use(
       const token = localStorage.getItem("token")
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
+        
+        // Also ensure token is set in cookie for server-side API routes
+        const cookieExists = document.cookie.split(';').some(item => item.trim().startsWith('token='))
+        if (!cookieExists) {
+          document.cookie = `token=${token}; path=/; max-age=${60 * 60 * 24 * 7}` // 7 days
+        }
       }
     }
     return config
@@ -60,11 +97,25 @@ export const authAPI = {
 
 // Mentor APIs
 export const mentorAPI = {
-  getAllMentors: (params?: any) => api.get("/mentors", { params }),
-  getMentor: (id: string) => api.get(`/mentors/${id}`),
-  getMentorProfile: () => api.get("/mentors/profile"),
-  updateMentorProfile: (data: any) => api.put("/mentors/profile", data),
-  getMentorReviews: (mentorId: string) => api.get(`/mentors/${mentorId}/reviews`),
+  // Use frontendApi for client-side requests
+  getAllMentors(params?: any) {
+    return frontendApi.get("/mentors", { params })
+  },
+  getMentor(id: string) {
+    return frontendApi.get(`/mentors/${id}`)
+  },
+  getMentorProfile() {
+    return frontendApi.get("/mentors/profile")
+  },
+  updateMentorProfile(data: any) {
+    return frontendApi.put("/mentors/profile", data)
+  },
+  getMentorReviews(mentorId: string) {
+    return frontendApi.get(`/reviews/${mentorId}`)
+  },
+  submitReview(mentorId: string, data: { rating: number, comment: string }) {
+    return frontendApi.post(`/mentors/${mentorId}/reviews`, data)
+  },
 }
 
 // Mentee APIs
@@ -78,20 +129,55 @@ export const menteeAPI = {
 
 // Session APIs
 export const sessionAPI = {
-  getSessions: () => api.get("/sessions"),
-  getSession: (id: string) => api.get(`/sessions/${id}`),
-  createSession: (data: any) => api.post("/sessions", data),
-  updateSession: (id: string, data: any) => api.put(`/sessions/${id}`, data),
-  deleteSession: (id: string) => api.delete(`/sessions/${id}`),
-  updateSessionStatus: (id: string, status: string) => 
-    api.put(`/sessions/${id}/status`, { status }),
+  // Use frontendApi for client-side requests
+  getSessions() {
+    return frontendApi.get("/sessions")
+  },
+  getMenteeSessions() {
+    return frontendApi.get("/mentee/sessions")
+  },
+  getMentorSessions() {
+    return frontendApi.get("/mentor/sessions")
+  },
+  getSession(id: string) {
+    return frontendApi.get(`/sessions/${id}`)
+  },
+  createSession(data: any) {
+    return frontendApi.post("/sessions", data)
+  },
+  bookSession(data: {
+    mentorUserId: string,
+    title: string,
+    description?: string,
+    date: string,
+    duration: number,
+    communicationType: string
+  }) {
+    return frontendApi.post("/sessions", data)
+  },
+  updateSession(id: string, data: any) {
+    return frontendApi.put(`/sessions/${id}`, data)
+  },
+  deleteSession(id: string) {
+    return frontendApi.delete(`/sessions/${id}`)
+  },
+  updateSessionStatus(id: string, status: string) {
+    return frontendApi.put(`/sessions/${id}/status`, { status })
+  },
 }
 
 // Review APIs
 export const reviewAPI = {
-  addReview: (mentorId: string, data: any) => api.post(`/mentors/${mentorId}/reviews`, data),
-  updateReview: (id: string, data: any) => api.put(`/reviews/${id}`, data),
-  deleteReview: (id: string) => api.delete(`/reviews/${id}`),
+  // Use frontendApi for client-side requests
+  addReview(mentorId: string, data: any) {
+    return frontendApi.post(`/reviews/${mentorId}`, data)
+  },
+  updateReview(id: string, data: any) {
+    return frontendApi.put(`/reviews/${id}`, data)
+  },
+  deleteReview(id: string) {
+    return frontendApi.delete(`/reviews/${id}`)
+  },
 }
 
 // Message APIs

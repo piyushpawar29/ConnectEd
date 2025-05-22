@@ -1,6 +1,5 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { useState } from "react"
 import type { DefaultSession } from "next-auth"
 
 // Extend the types
@@ -20,7 +19,16 @@ interface User {
   password: string
 }
 
-const [users,SetUsers] = useState<User[]>([])
+// Static users array instead of using useState
+const users: User[] = [
+  {
+    id: "1",
+    name: "Test User",
+    email: "test@example.com",
+    image: "/placeholder.svg",
+    password: "password123"
+  }
+]
   
 
 const handler = NextAuth({

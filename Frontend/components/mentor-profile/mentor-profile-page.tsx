@@ -24,6 +24,8 @@ import {
   BookOpen,
   ChevronDown,
   ChevronUp,
+  Link,
+  Home as HomeIcon,
 } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -47,6 +49,9 @@ import MentorshipJourney from "./mentorship-journey"
 import MentorSkillChart from "./mentor-skill-chart"
 import MentorshipStats from "./mentorship-stats"
 import { useToast } from "@/hooks/use-toast"
+import Home from "@/app/page"
+import { format, parse } from "date-fns"
+import axios from "axios"
 
 interface MentorProfilePageProps {
   mentorId: string
@@ -61,6 +66,11 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
   const [showBookingDialog, setShowBookingDialog] = useState(false)
   const [showReviewDialog, setShowReviewDialog] = useState(false)
   const [activeTab, setActiveTab] = useState("overview")
+  const [selectedSessionType, setSelectedSessionType] = useState<string | null>(null)
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
+  const [selectedTime, setSelectedTime] = useState<string | null>(null)
+  const [additionalInfo, setAdditionalInfo] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -69,17 +79,61 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
     const fetchMentor = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`/api/mentors/${mentorId}`)
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch mentor data")
+        
+        // Import the mentorAPI from our utility
+        const { mentorAPI } = await import('@/lib/api')
+        
+        // Fetch the mentor by ID using our API utility
+        const response = await mentorAPI.getMentor(mentorId)
+        const responseData = response.data
+        
+        // Check if the response has the expected structure
+        if (!responseData.success) {
+          throw new Error(responseData.message || 'Failed to fetch mentor data')
+        }
+        
+        // Extract mentor from the nested data structure
+        // The backend returns { success: true, data: { mentor, reviews } }
+        const { mentor, reviews } = responseData.data
+        
+        // Combine data from mentor and user fields
+        const mentorData = {
+          id: mentor._id,
+          name: mentor.user?.name || 'Anonymous Mentor',
+          email: mentor.user?.email,
+          avatar: mentor.user?.avatar,
+          image: mentor.user?.avatar,
+          role: mentor.role || 'Mentor',
+          company: mentor.company || 'Company',
+          hourlyRate: mentor.hourlyRate || 75,
+          expertise: mentor.expertise || [],
+          languages: mentor.languages || ['English'],
+          experience: mentor.experience || '',
+          yearsOfExperience: mentor.yearsOfExperience || 5,
+          availability: mentor.availability || 'Flexible',
+          category: mentor.category || 'Technology',
+          communicationPreference: mentor.communicationPreference || 'Any',
+          rating: mentor.rating || 0,
+          reviews: reviews || [],
+          bio: mentor.user?.bio || '',
+          isAvailable: true, // Default value as this might not be in the backend model
+          socials: mentor.socials || {},
+          industry: mentor.category || 'Technology',
+          location: mentor.location || 'Remote'
         }
 
-        const data = await response.json()
-        setMentor(data)
+        console.log('Mentor data successfully retrieved:', mentorData)
+        setMentor(mentorData)
       } catch (err) {
         setError("Failed to load mentor profile. Please try again later.")
-        console.error(err)
+        console.error('Error fetching mentor:', err)
+        
+        // Instead of using mock data, show proper error message to the user
+        toast({
+          title: "Error Loading Profile",
+          description: "We couldn't load this mentor's profile. Please try again later.",
+          variant: "destructive"
+        })
       } finally {
         setLoading(false)
       }
@@ -117,6 +171,177 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
         title: "Link copied!",
         description: "The profile link has been copied to your clipboard",
       })
+    }
+  }
+
+  // Handle booking form submission
+  const handleBookingSubmit = async () => {
+    if (!selectedSessionType || !selectedDate || !selectedTime || !mentor) {
+      toast({
+        title: "Missing information",
+        description: "Please select a session type, date and time",
+        variant: "destructive",
+      })
+      return
+    }
+    
+    // Get token from localStorage
+    let token = null;
+    if (typeof window !== 'undefined') {
+      token = localStorage.getItem('token');
+      
+      // Also set token in cookie for server-side access
+      if (token) {
+        document.cookie = `token=${token}; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 days
+      }
+    }
+    
+    if (!token) {
+      toast({
+        title: "Authentication Error",
+        description: "Please log in to book a session.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true)
+      
+      // Get the session details based on the selected type
+      const sessionTypes = [
+        {
+          id: "1on1",
+          name: "1:1 Video Session",
+          duration: 60, // minutes
+          price: mentor.hourlyRate || 100,
+        },
+        {
+          id: "text",
+          name: "Text Consultation",
+          duration: 10080, // 7 days in minutes
+          price: (mentor.hourlyRate || 100) * 3,
+        },
+        {
+          id: "group",
+          name: "Group Session",
+          duration: 90, // minutes
+          price: (mentor.hourlyRate || 100) * 0.6,
+        },
+        {
+          id: "code",
+          name: "Code Review",
+          duration: 45, // minutes
+          price: (mentor.hourlyRate || 100) * 0.8,
+        },
+      ]
+      
+      const selectedSession = sessionTypes.find(session => session.id === selectedSessionType)
+      
+      if (!selectedSession) {
+        throw new Error("Invalid session type")
+      }
+      
+      // Format date and time for API
+      let bookingDate: Date
+      try {
+        // Parse the time string (e.g., "10:00 AM")
+        const timeRegex = /(\d+):(\d+)\s*([AP]M)/i
+        const match = selectedTime.match(timeRegex)
+        
+        if (!match) {
+          throw new Error("Invalid time format")
+        }
+        
+        let [_, hours, minutes, period] = match
+        let hoursNum = parseInt(hours, 10)
+        
+        // Convert to 24-hour format
+        if (period.toUpperCase() === "PM" && hoursNum < 12) {
+          hoursNum += 12
+        } else if (period.toUpperCase() === "AM" && hoursNum === 12) {
+          hoursNum = 0
+        }
+        
+        // Create a new date object with the selected date and time
+        bookingDate = new Date(selectedDate)
+        bookingDate.setHours(hoursNum, parseInt(minutes, 10), 0, 0)
+      } catch (error) {
+        console.error("Error parsing time:", error)
+        toast({
+          title: "Invalid time format",
+          description: "Please select a valid time",
+          variant: "destructive",
+        })
+        setIsSubmitting(false)
+        return
+      }
+      
+      // Prepare booking data for API
+      const bookingData = {
+        mentorId: mentor.id,
+        sessionType: selectedSession.id,
+        sessionName: selectedSession.name,
+        sessionDuration: selectedSession.duration,
+        sessionPrice: selectedSession.price,
+        bookingDate: bookingDate.toISOString(),
+        additionalInfo: additionalInfo,
+      }
+      
+      console.log("Sending booking data:", bookingData)
+      
+      // Prepare the request payload
+      const requestPayload = {
+        mentor: mentor.id,
+        title: selectedSession.name,
+        description: additionalInfo || `${selectedSession.name} with ${mentor.name}`,
+        date: bookingDate.toISOString(),
+        duration: selectedSession.duration,
+        communicationType: selectedSession.id === 'text' ? 'text' : 'video'
+      };
+      
+      console.log("Request payload:", requestPayload);
+      
+      // Send the booking request using our API utility
+      try {
+        // Import the sessionAPI from our utility
+        const { sessionAPI } = await import('@/lib/api');
+        
+        // Use the bookSession method
+        const response = await sessionAPI.bookSession(requestPayload);
+        
+        console.log("Response status:", response.status);
+        console.log("Response data:", response.data);
+        
+        if (response.status !== 201 && response.status !== 200) {
+          throw new Error(response.data.error || response.data.message || 'Failed to book session');
+        }
+        
+        // Show success toast
+        toast({
+          title: "Booking successful!",
+          description: `Your session with ${mentor.name} has been scheduled.`,
+        });
+        
+        // Close the dialog and reset form state
+        setShowBookingDialog(false);
+        setSelectedSessionType(null);
+        setSelectedDate(new Date());
+        setSelectedTime(null);
+        setAdditionalInfo("");
+      } catch (fetchError) {
+        console.error("Fetch error:", fetchError);
+        throw fetchError; // Re-throw to be caught by the outer catch block
+      }
+    } catch (error) {
+      console.error("Error booking session:", error);
+      toast({
+        title: "Booking failed",
+        description: error instanceof Error ? error.message : "Failed to book session. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -205,7 +430,33 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
   // If mentor data is loaded successfully
   if (mentor) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 pt-24 pb-16">
+      <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 pt-20 pb-16">
+       <div className="absolute top-4 left-0 w-full h-14 bg-gray-900/50 backdrop-blur-sm z-10">
+            <div className="container mx-auto px-4 flex items-center justify-between">
+             <a href="/" className="flex items-center gap-2 z-50">
+            <div className="relative w-10 h-10">
+              <div className="absolute inset-0 bg-cyan-500 rounded-full blur-md opacity-70"></div>
+              <div className="relative flex items-center justify-center w-full h-full bg-gray-900 rounded-full border border-cyan-500 z-10">
+                <span className="font-bold text-cyan-500">C</span>
+              </div>
+            </div>
+            <span className="font-bold text-xl">ConnectEd</span>
+          </a>
+              <div className="flex items-center space-x-4">
+                <a href="/">
+                  <Button variant="outline" className="border-cyan-500 text-cyan-500 hover:bg-cyan-950">
+                    Home Page
+                  </Button>
+                </a>
+                <a href="/logout">
+                  <Button variant="outline" className="border-cyan-500 text-cyan-500 hover:bg-cyan-950">
+                    Logout
+                  </Button>
+                </a>
+                </div>
+              </div>
+            </div>
+
         {/* Back button */}
         <div className="container mx-auto px-4 mb-6">
           <Button variant="ghost" className="text-gray-400 hover:text-white" onClick={() => router.back()}>
@@ -226,21 +477,21 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
               >
                 <div className="flex flex-col items-center">
                   {/* Profile image with availability indicator */}
-                  <div className="relative mb-4">
+                  {/* <div className="relative mb-4">
                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full blur-md opacity-70"></div>
                     <div className="relative">
                       <Image
                         src={mentor.image || "/placeholder.svg?height=160&width=160"}
                         width={160}
                         height={160}
-                        alt={mentor.name}
+                        alt="Mentor Profile Image"
                         className="rounded-full border-2 border-gray-800 object-cover"
                       />
                       <div
                         className={`absolute bottom-2 right-2 h-5 w-5 rounded-full border-2 border-gray-900 ${mentor.isAvailable ? "bg-green-500" : "bg-red-500"}`}
                       ></div>
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* Name and title */}
                   <h1 className="text-2xl font-bold mb-1">{mentor.name}</h1>
@@ -253,11 +504,11 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-5 h-5 ${i < Math.floor(mentor.rating) ? "text-yellow-400 fill-yellow-400" : "text-gray-600"}`}
+                        className={`w-5 h-5 ${i < Math.floor(mentor.rating || 0) ? "text-yellow-400 fill-yellow-400" : "text-gray-600"}`}
                       />
                     ))}
-                    <span className="ml-2 text-gray-300">
-                      {mentor.rating} ({mentor.reviews?.length || 0} reviews)
+                    <span className="text-sm text-gray-400 ml-2">
+                      {mentor.rating || 0} ({mentor.reviews?.length || 0} reviews)
                     </span>
                   </div>
 
@@ -358,7 +609,7 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
                   </div>
 
                   {/* Social links */}
-                  <div className="w-full mt-6 pt-6 border-t border-gray-800">
+                  {/* <div className="w-full mt-6 pt-6 border-t border-gray-800">
                     <h3 className="text-sm uppercase text-gray-500 mb-4">Connect</h3>
                     <div className="flex gap-3">
                       {mentor.linkedin && (
@@ -405,7 +656,7 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
                         </Button>
                       )}
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               </motion.div>
             </div>
@@ -617,7 +868,7 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
                       </div>
                     </div>
 
-                    {/* Work experience */}
+                    {/* Work experience
                     <div className="bg-gray-900/60 backdrop-blur-lg border border-gray-800 rounded-xl p-6">
                       <h2 className="text-xl font-bold mb-4">Work Experience</h2>
                       <div className="space-y-6">
@@ -667,7 +918,7 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
                             </div>
                           ))}
                       </div>
-                    </div>
+                    </div> */}
                   </motion.div>
                 </TabsContent>
 
@@ -683,12 +934,12 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
                     <div className="bg-gray-900/60 backdrop-blur-lg border border-gray-800 rounded-xl p-6">
                       <div className="flex flex-col md:flex-row gap-8">
                         <div className="md:w-1/3 flex flex-col items-center justify-center">
-                          <div className="text-5xl font-bold mb-2">{mentor.rating}</div>
+                          <div className="text-5xl font-bold mb-2">{mentor.rating || 0}</div>
                           <div className="flex mb-2">
                             {[...Array(5)].map((_, i) => (
                               <Star
                                 key={i}
-                                className={`w-5 h-5 ${i < Math.floor(mentor.rating) ? "text-yellow-400 fill-yellow-400" : "text-gray-600"}`}
+                                className={`w-5 h-5 ${i < Math.floor(mentor.rating || 0) ? "text-yellow-400 fill-yellow-400" : "text-gray-600"}`}
                               />
                             ))}
                           </div>
@@ -930,7 +1181,10 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
 
                     {/* Availability calendar */}
                     <div className="bg-gray-900/60 backdrop-blur-lg border border-gray-800 rounded-xl p-6">
-                      <h2 className="text-xl font-bold mb-6">Availability</h2>
+                      <h2 className="text-xl font-bold mb-2">Availability</h2>
+                      <p className="text-gray-400 mb-6">
+                        Select a date to check {mentor.name}'s availability and book a session
+                      </p>
                       <BookingCalendar mentor={mentor} />
                     </div>
 
@@ -994,7 +1248,7 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
 
         {/* Booking dialog */}
         <Dialog open={showBookingDialog} onOpenChange={setShowBookingDialog}>
-          <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-3xl">
+          <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             <DialogHeader>
               <DialogTitle className="text-2xl">Book a Session with {mentor.name}</DialogTitle>
               <DialogDescription className="text-gray-400">
@@ -1002,79 +1256,106 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
               </DialogDescription>
             </DialogHeader>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="font-medium mb-3">Session Type</h3>
-                <div className="space-y-3">
-                  {[
-                    {
-                      id: "1on1",
-                      name: "1:1 Video Session",
-                      duration: "60 minutes",
-                      price: mentor.hourlyRate || 100,
-                      icon: <Video className="h-5 w-5 text-cyan-400" />,
-                    },
-                    {
-                      id: "text",
-                      name: "Text Consultation",
-                      duration: "1 week",
-                      price: (mentor.hourlyRate || 100) * 3,
-                      icon: <MessageSquare className="h-5 w-5 text-purple-400" />,
-                    },
-                    {
-                      id: "group",
-                      name: "Group Session",
-                      duration: "90 minutes",
-                      price: (mentor.hourlyRate || 100) * 0.6,
-                      icon: <Users className="h-5 w-5 text-blue-400" />,
-                    },
-                    {
-                      id: "code",
-                      name: "Code Review",
-                      duration: "45 minutes",
-                      price: (mentor.hourlyRate || 100) * 0.8,
-                      icon: <BookOpen className="h-5 w-5 text-green-400" />,
-                    },
-                  ].map((type) => (
-                    <div
-                      key={type.id}
-                      className="flex items-center gap-3 p-3 rounded-lg border border-gray-800 hover:border-cyan-500/50 cursor-pointer transition-colors"
-                    >
-                      <div className="h-10 w-10 rounded-full bg-gray-800 flex items-center justify-center">
-                        {type.icon}
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="font-medium mb-3">Session Type</h3>
+                  <div className="space-y-3">
+                    {[
+                      {
+                        id: "1on1",
+                        name: "1:1 Video Session",
+                        duration: "60 minutes",
+                        price: mentor.hourlyRate || 100,
+                        icon: <Video className="h-5 w-5 text-cyan-400" />,
+                      },
+                      {
+                        id: "text",
+                        name: "Text Consultation",
+                        duration: "1 week",
+                        price: (mentor.hourlyRate || 100) * 3,
+                        icon: <MessageSquare className="h-5 w-5 text-purple-400" />,
+                      },
+                      {
+                        id: "group",
+                        name: "Group Session",
+                        duration: "90 minutes",
+                        price: (mentor.hourlyRate || 100) * 0.6,
+                        icon: <Users className="h-5 w-5 text-blue-400" />,
+                      },
+                      {
+                        id: "code",
+                        name: "Code Review",
+                        duration: "45 minutes",
+                        price: (mentor.hourlyRate || 100) * 0.8,
+                        icon: <BookOpen className="h-5 w-5 text-green-400" />,
+                      },
+                    ].map((type) => (
+                      <div
+                        key={type.id}
+                        className={`flex items-center gap-3 p-3 rounded-lg border ${
+                          selectedSessionType === type.id
+                            ? "border-cyan-500 bg-cyan-950/30"
+                            : "border-gray-800 hover:border-cyan-500/50"
+                        } cursor-pointer transition-colors`}
+                        onClick={() => setSelectedSessionType(type.id)}
+                      >
+                        <div className="h-10 w-10 rounded-full bg-gray-800 flex items-center justify-center">
+                          {type.icon}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium">{type.name}</p>
+                          <p className="text-sm text-gray-400">{type.duration}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold">${type.price}</p>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="font-medium">{type.name}</p>
-                        <p className="text-sm text-gray-400">{type.duration}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold">${type.price}</p>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+
+                  <div className="mt-6">
+                    <h3 className="font-medium mb-3">Additional Information</h3>
+                    <Textarea
+                      placeholder="Share what you'd like to discuss in this session..."
+                      className="bg-gray-800 border-gray-700 focus:border-cyan-500 h-32"
+                      value={additionalInfo}
+                      onChange={(e) => setAdditionalInfo(e.target.value)}
+                    />
+                  </div>
                 </div>
 
-                <div className="mt-6">
-                  <h3 className="font-medium mb-3">Additional Information</h3>
-                  <Textarea
-                    placeholder="Share what you'd like to discuss in this session..."
-                    className="bg-gray-800 border-gray-700 focus:border-cyan-500 h-32"
+                <div>
+                  <h3 className="font-medium mb-3">Select Date & Time</h3>
+                  <BookingCalendar 
+                    mentor={mentor}
+                    compact 
+                    selectedDate={selectedDate}
+                    onDateSelect={setSelectedDate}
+                    selectedTime={selectedTime}
+                    onTimeSelect={setSelectedTime}
                   />
                 </div>
               </div>
-
-              <div>
-                <h3 className="font-medium mb-3">Select Date & Time</h3>
-                <BookingCalendar mentor={mentor} compact />
-              </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="pt-4 border-t border-gray-800 mt-4">
               <Button variant="outline" onClick={() => setShowBookingDialog(false)}>
                 Cancel
               </Button>
-              <Button className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white">
-                Confirm Booking
+              <Button 
+                className={`bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white ${isSubmitting ? 'opacity-70' : ''}`}
+                disabled={!selectedSessionType || !selectedDate || !selectedTime || isSubmitting}
+                onClick={handleBookingSubmit}
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 rounded-full border-2 border-r-transparent border-white animate-spin mr-2"></div>
+                    Processing...
+                  </div>
+                ) : (
+                  "Confirm Booking"
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>

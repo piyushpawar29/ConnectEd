@@ -8,13 +8,17 @@ const {
   updateSessionStatus
 } = require('../controllers/sessions');
 
-const { protect } = require('../middlewares/auth');
+const { protect, authorize } = require('../middlewares/auth');
 
 const router = express.Router();
 
 router.route('/')
   .get(protect, getSessions)
   .post(protect, createSession);
+
+// Add dedicated route for mentor sessions
+router.route('/mentor')
+  .get(protect, authorize('mentor'), getSessions);
 
 router.route('/:id')
   .get(protect, getSession)

@@ -10,7 +10,9 @@ exports.createSession = async (req, res) => {
   try {
     req.body.creator = req.user.id;
 
-    const { mentor: mentorId, mentee: menteeId, title, description, date, duration, communicationType } = req.body;
+    // Extract mentee ID from the authenticated user if not provided
+    const { mentor: mentorId, title, description, date, duration, communicationType } = req.body;
+    const menteeId = req.body.mentee || req.user.id; // Use provided mentee ID or default to the authenticated user
 
     // Validate mentor
     const mentor = await User.findById(mentorId);

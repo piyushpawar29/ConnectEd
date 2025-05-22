@@ -93,7 +93,7 @@ interface Profile {
   languages: string[]
   communicationPreference: string
   availability: { day: string; slots: string[] }[]
-  profilePicture: string
+  profilePicture?: string
   rating: number
   reviewCount: number
 }
@@ -108,6 +108,65 @@ interface Session {
   topic: string
   status: string
 }
+
+// Debug token formatting helper
+const debugToken = (token: string | null) => {
+  if (!token) {
+    console.error("DEBUG: Token is null or empty");
+    return false;
+  }
+
+  console.log("DEBUG: Token length:", token.length);
+  console.log("DEBUG: First 10 chars:", token.substring(0, 10) + "...");
+  
+  // Check if token is wrapped in quotes
+  const isQuoted = token.startsWith('"') && token.endsWith('"');
+  console.log("DEBUG: Token is quoted:", isQuoted);
+  
+  // Check if token looks like a JWT (three parts separated by dots)
+  const jwtFormat = /^[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*$/;
+  const formattedToken = isQuoted ? token.slice(1, -1) : token;
+  const isJwtFormat = jwtFormat.test(formattedToken);
+  console.log("DEBUG: Is JWT format:", isJwtFormat);
+  
+  return isJwtFormat;
+};
+
+// Debug axios response handler
+const debugAxiosResponse = (response: any, source: string) => {
+  console.log(`DEBUG ${source} response:`, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers,
+    hasData: !!response.data
+  });
+  
+  if (response.data) {
+    console.log(`DEBUG ${source} data:`, {
+      success: response.data.success,
+      message: response.data.message,
+      dataKeys: response.data.data ? Object.keys(response.data.data) : 'no data'
+    });
+  }
+};
+
+// Debug axios error handler
+const debugAxiosError = (error: any, source: string) => {
+  console.error(`DEBUG ${source} error:`, {
+    message: error.message,
+    code: error.code,
+    hasResponse: !!error.response,
+    hasRequest: !!error.request
+  });
+  
+  if (error.response) {
+    console.error(`DEBUG ${source} response error:`, {
+      status: error.response.status,
+      statusText: error.response.statusText,
+      data: error.response.data
+    });
+  }
+};
 
 export default function MentorDashboard() {
   const [profile, setProfile] = useState<Profile>({
@@ -131,57 +190,350 @@ export default function MentorDashboard() {
   const [newLanguage, setNewLanguage] = useState("")
   const [newTimeSlot, setNewTimeSlot] = useState({ day: "", time: "" })
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
+  const [backendAvailable, setBackendAvailable] = useState(false)
   const { toast } = useToast()
 
-  // Simulate fetching data
+  // Check if backend server is running
+  const checkBackendStatus = async () => {
+    try {
+      const response = await axios.get('http://localhost:5001/api/auth/test', {
+        timeout: 3000 // 3 second timeout
+      });
+      debugAxiosResponse(response, 'Backend status check');
+      setBackendAvailable(true);
+      return true;
+    } catch (error) {
+      debugAxiosError(error, 'Backend status check');
+      setBackendAvailable(false);
+      return false;
+    }
+  };
+  
+  // Add a function to test the connection on demand
+  const testBackendConnection = async () => {
+    toast({
+      title: "Testing Connection",
+      description: "Checking connection to backend server...",
+    });
+    
+    try {
+      const result = await checkBackendStatus();
+      
+      if (result) {
+        toast({
+          title: "Connection Successful",
+          description: "Connected to backend server successfully!",
+        });
+        
+        // Refresh data
+        window.location.reload();
+      } else {
+        toast({
+          title: "Connection Failed",
+          description: "Cannot connect to backend server. Please make sure it's running on port 5001.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Connection Error",
+        description: "An error occurred while checking the connection.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Fetch data from backend
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // In a real app, these would be actual API calls
-        const profileResponse = await axios.get('/api/mentor/profile');
-        const sessionsResponse = await axios.get('/api/mentor/sessions');
+        setLoading(true);
+        
+        // First check if backend is available without authentication
+        try {
+          // Simple test to see if backend is responding
+          const testResponse = await axios.get('http://localhost:5001/api/auth/test', { timeout: 3000 });
+          debugAxiosResponse(testResponse, 'Backend test');
+          setBackendAvailable(true);
+        } catch (testError) {
+          debugAxiosError(testError, 'Backend test');
+          setBackendAvailable(false);
+          setLoading(false);
+          toast({
+            title: "Backend Server Unavailable",
+            description: "Cannot connect to the backend server. Please ensure it's running at http://localhost:5001",
+            variant: "destructive",
+          });
+          return; // Exit early if backend is not available
+        }
+        
+        // Get token from localStorage
+        let token = null;
+        if (typeof window !== 'undefined') {
+          token = localStorage.getItem('token');
+          console.log("Token found in localStorage:", token ? "Yes" : "No");
+        }
+        
+        if (!token) {
+          toast({
+            title: "Authentication Error",
+            description: "Please log in again to continue.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+        
+        // Debug token format before applying any transformations
+        console.log("Original token format:");
+        debugToken(token);
+        
+        // Ensure token is properly formatted (without extra quotes)
+        if (token.startsWith('"') && token.endsWith('"')) {
+          token = token.slice(1, -1);
+          console.log("After removing quotes:");
+          debugToken(token);
+        }
+        
+        const headers = {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        };
+        
+        console.log("Final request headers:", {
+          Authorization: headers.Authorization.substring(0, 15) + '...',
+          Accept: headers.Accept,
+          ContentType: headers['Content-Type']
+        });
 
-        setProfile(profileResponse.data);
-        setUpcomingSessions(sessionsResponse.data);
-
-        // Simulate API delay
-        setTimeout(() => {
-          setLoading(false)
-        }, 1000)
-      } catch (error) {
-        console.error("Error fetching data:", error)
+        // Try direct API call first
+        try {
+          console.log("Attempting direct API call to backend");
+          const response = await axios.get(
+            'http://localhost:5001/api/mentors/profile', 
+            { headers, timeout: 5000 }
+          );
+          
+          debugAxiosResponse(response, 'Direct API');
+          
+          // Transform the data from the backend format to the frontend format
+          const { user, profile } = response.data.data;
+          const transformedData = {
+            id: user?.id || "",
+            name: user?.name || "",
+            email: user?.email || "",
+            bio: user?.bio || profile?.bio || "",
+            skills: Array.isArray(profile?.expertise) ? profile.expertise : [],
+            languages: Array.isArray(profile?.languages) ? profile.languages : ["English"],
+            availability: profile?.availability ? formatAvailability(profile.availability) : defaultAvailability(),
+            experience: profile?.experience || "",
+            hourlyRate: profile?.hourlyRate || 0,
+            communicationPreference: profile?.communicationPreference || "Any",
+            company: profile?.company || "",
+            category: profile?.category || "Technology",
+            socials: profile?.socials || {},
+            rating: profile?.rating || 0,
+            reviewCount: profile?.reviews || 0
+          };
+          
+          setProfile(transformedData);
+          setLoading(false);
+          return;
+          
+        } catch (error: any) {
+          debugAxiosError(error, 'Direct API');
+          
+          // If direct API call fails, try Next.js API route
+          try {
+            const response = await axios.get('/api/mentor/profile', { headers });
+            debugAxiosResponse(response, 'Next.js API');
+            
+            // Ensure data is properly formatted
+            const mentorData = response.data;
+            
+            // Set default values for potentially missing fields
+            const transformedData = {
+              ...mentorData,
+              bio: mentorData.bio || "",
+              skills: Array.isArray(mentorData.skills) ? mentorData.skills : [], 
+              languages: Array.isArray(mentorData.languages) ? mentorData.languages : ["English"],
+              availability: mentorData.availability && Array.isArray(mentorData.availability) ? 
+                mentorData.availability : defaultAvailability(),
+              rating: mentorData.rating || 0,
+              reviewCount: mentorData.reviewCount || 0
+            };
+            
+            setProfile(transformedData);
+            
+          } catch (apiError: any) {
+            debugAxiosError(apiError, 'Next.js API');
+            throw new Error("Failed to fetch mentor data from both direct API and API routes");
+          }
+        }
+        
+        setLoading(false);
+        
+      } catch (error: any) {
+        console.error("Error fetching data:", error);
         toast({
           title: "Error",
-          description: "Failed to load your profile data. Please try again.",
+          description: error.message || "Failed to load mentor data",
           variant: "destructive",
-        })
-        setLoading(false)
+        });
+        setLoading(false);
       }
-    }
+    };
 
-    fetchData()
-  }, [toast])
+    fetchData();
+  }, [toast]);
+  
+  // Helper function to format availability from string to structured format
+  const formatAvailability = (availabilityString: string) => {
+    // Default structured availability
+    const defaultAvail = defaultAvailability();
+    
+    try {
+      // If it's already an array, return it
+      if (Array.isArray(availabilityString)) {
+        return availabilityString;
+      }
+      
+      // Try to parse if it's a JSON string
+      if (typeof availabilityString === 'string' && availabilityString.trim().startsWith('[')) {
+        return JSON.parse(availabilityString);
+      }
+      
+      // If it's just a text like "Flexible", create a basic structure
+      return [
+        {
+          day: "Monday-Friday",
+          slots: ["9:00 AM - 5:00 PM"]
+        },
+        {
+          day: "Weekends",
+          slots: ["By appointment"]
+        }
+      ];
+    } catch (e) {
+      console.error("Error parsing availability:", e);
+      return defaultAvail;
+    }
+  };
+  
+  // Default availability structure
+  const defaultAvailability = () => {
+    return [
+      {
+        day: "Monday",
+        slots: ["9:00 AM - 12:00 PM", "2:00 PM - 5:00 PM"]
+      },
+      {
+        day: "Tuesday",
+        slots: ["9:00 AM - 12:00 PM", "2:00 PM - 5:00 PM"]
+      },
+      {
+        day: "Wednesday",
+        slots: ["9:00 AM - 12:00 PM", "2:00 PM - 5:00 PM"]
+      },
+      {
+        day: "Thursday",
+        slots: ["9:00 AM - 12:00 PM", "2:00 PM - 5:00 PM"]
+      },
+      {
+        day: "Friday",
+        slots: ["9:00 AM - 12:00 PM", "2:00 PM - 5:00 PM"]
+      }
+    ];
+  };
 
   const handleProfileUpdate = async () => {
     setSaving(true)
     try {
-      // In a real app, this would be an actual API call
-      await axios.put('/api/mentor/profile', profile);
-
-      // Simulate API delay
-      // await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      toast({
-        title: "Profile Updated",
-        description: "Your profile has been successfully updated.",
-      })
-    } catch (error) {
-      console.error("Error updating profile:", error)
+      // Get token from localStorage
+      let token = null;
+      if (typeof window !== 'undefined') {
+        token = localStorage.getItem('token');
+      }
+      
+      if (!token) {
+        toast({
+          title: "Authentication Error",
+          description: "Please log in again to continue.",
+          variant: "destructive",
+        });
+        setSaving(false);
+        return;
+      }
+      
+      // Ensure token is properly formatted (without extra quotes)
+      if (token.startsWith('"') && token.endsWith('"')) {
+        token = token.slice(1, -1);
+      }
+      
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      };
+      
+      // Import the mentorAPI from our utility
+      try {
+        const { mentorAPI } = await import('@/lib/api');
+        
+        console.log("Updating mentor profile via API utility");
+        const payload = {
+          availability: profile.availability,
+          expertise: profile.skills,
+          languages: profile.languages
+        };
+        
+        // Use our API utility to update the mentor profile
+        const response = await mentorAPI.updateMentorProfile(payload);
+        
+        console.log("Profile update response:", response.status);
+        
+        toast({
+          title: "Profile Updated",
+          description: "Your profile settings have been successfully updated.",
+        });
+      } catch (directError) {
+        console.error("Direct API update failed:", directError);
+        
+        // Fall back to Next.js API route
+        try {
+          console.log("Trying Next.js API route");
+          // Import the frontendApi directly
+          const { default: frontendApi } = await import('@/lib/api');
+          
+          const response = await frontendApi.put(
+            '/api/mentors/profile', 
+            { 
+              availability: profile.availability,
+              expertise: profile.skills,
+              languages: profile.languages
+            }
+          );
+          
+          console.log("Next.js API update response:", response.status);
+          
+          toast({
+            title: "Profile Updated",
+            description: "Your profile settings have been successfully updated.",
+          });
+        } catch (apiError) {
+          console.error("All update attempts failed:", apiError);
+          throw new Error("Failed to update profile through any available route");
+        }
+      }
+    } catch (error: any) {
+      console.error("Error updating profile settings:", error);
+      
       toast({
         title: "Update Failed",
-        description: "Failed to update your profile. Please try again.",
+        description: error.message || "Failed to update your profile settings. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
       setSaving(false)
     }
@@ -297,6 +649,43 @@ export default function MentorDashboard() {
       </div>
     )
   }
+  
+  // Display a message when backend is unavailable
+  if (!backendAvailable && !loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 pt-24 pb-16">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col items-center justify-center space-y-6 mt-12">
+            <div className="bg-red-500/10 border border-red-500 rounded-lg p-8 max-w-lg text-center">
+              <h2 className="text-2xl font-bold text-red-400 mb-4">Backend Server Unavailable</h2>
+              <p className="text-gray-300 mb-6">
+                Cannot connect to the backend server at <span className="font-mono bg-gray-800 px-2 py-1 rounded">http://localhost:5001</span>
+              </p>
+              <div className="space-y-4">
+                <p className="text-gray-400">
+                  Please ensure the backend server is running. Common issues:
+                </p>
+                <ul className="text-gray-400 text-left list-disc ml-8">
+                  <li>Backend server is not started</li>
+                  <li>Backend is running on a different port than 5001</li>
+                  <li>Firewall is blocking the connection</li>
+                  <li>CORS settings preventing access (check console for details)</li>
+                </ul>
+                <div className="pt-4">
+                  <Button 
+                    onClick={testBackendConnection}
+                    className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
+                  >
+                    Test Connection
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 pt-24 pb-16">
@@ -320,19 +709,21 @@ export default function MentorDashboard() {
           </Link>
           <Link href="/logout" passHref>
             <Button variant="outline" className="border-cyan-500 text-cyan-500 hover:bg-cyan-950">
-              
               Logout
             </Button>
           </Link>
         </div>
       </div>
-
       </header>
+      
       <div className="container mx-auto px-4">
         <div className="flex flex-col space-y-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold">Mentor Dashboard</h1>
-            <Link href={`/mentor/${profile.id}`} passHref>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Mentor Dashboard</h1>
+              <p className="text-gray-400 mt-1">Manage your profile, sessions, and availability</p>
+            </div>
+            <Link href={`/mentors/${profile.id}`} passHref>
               <Button variant="outline" className="border-cyan-500 text-cyan-500 hover:bg-cyan-950">
                 <ExternalLink className="h-4 w-4 mr-2" />
                 View Public Profile
@@ -359,338 +750,271 @@ export default function MentorDashboard() {
             </TabsList>
 
             <TabsContent value="profile" className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {/* Profile Picture Section */}
-                <div className="md:col-span-1">
-                  <Card className="bg-gray-900/60 backdrop-blur-lg border-gray-800">
-                    <CardHeader>
-                      <CardTitle>Profile Picture</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-col items-center">
-                      <div className="relative mb-4 group">
-                        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-full blur-md opacity-70"></div>
-                        <Image
-                          src={profile.profilePicture || "/placeholder.svg"}
-                          alt={profile.name}
-                          width={150}
-                          height={150}
-                          className="rounded-full border-2 border-gray-800 relative z-10"
-                        />
-                        <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity z-20">
-                          <Upload className="h-8 w-8 text-white" />
-                        </div>
+              <Card className="bg-gray-900/60 backdrop-blur-lg border-gray-800">
+                <CardHeader className="border-b border-gray-800">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-xl">{profile.name}</CardTitle>
+                      <CardDescription>{profile.email}</CardDescription>
+                    </div>
+                    <div className="flex items-center bg-gray-800 px-4 py-2 rounded-lg">
+                      <div className="flex items-center mr-4">
+                        {[...Array(5)].map((_, i) => (
+                          <svg
+                            key={i}
+                            className={`w-4 h-4 ${i < Math.floor(profile.rating) ? "text-yellow-400 fill-yellow-400" : "text-gray-600"}`}
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                          </svg>
+                        ))}
                       </div>
-                      <Button variant="outline" className="w-full border-gray-700 hover:bg-gray-800">
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload New Photo
-                      </Button>
-                    </CardContent>
-                    <CardFooter className="flex flex-col space-y-4">
-                      <div className="w-full text-center">
-                        <div className="flex justify-center mb-1">
-                          {[...Array(5)].map((_, i) => (
-                            <svg
-                              key={i}
-                              className={`w-4 h-4 ${i < Math.floor(profile.rating) ? "text-yellow-400 fill-yellow-400" : "text-gray-600"}`}
-                              viewBox="0 0 24 24"
-                            >
-                              <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                            </svg>
-                          ))}
-                        </div>
-                        <p className="text-sm text-gray-400">
-                          {profile.rating} ({profile.reviewCount} reviews)
-                        </p>
-                      </div>
-                      <div className="w-full">
-                        <p className="text-sm text-gray-400 mb-1">Member since</p>
-                        <p className="font-medium">November 2023</p>
-                      </div>
-                    </CardFooter>
-                  </Card>
-                </div>
+                      <p className="text-sm text-gray-400">
+                        {profile.rating.toFixed(1)} ({profile.reviewCount} reviews)
+                      </p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6 pt-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="bio" className="text-sm text-gray-400">Professional Bio</Label>
+                    <Textarea
+                      id="bio"
+                      value={profile.bio}
+                      onChange={(e) => setProfile({...profile, bio: e.target.value})}
+                      className="bg-gray-800 border-gray-700 min-h-[120px] text-gray-200"
+                      placeholder="Write your professional bio here..."
+                    />
+                  </div>
 
-                {/* Profile Details Section */}
-                <div className="md:col-span-3">
-                  <Card className="bg-gray-900/60 backdrop-blur-lg border-gray-800">
-                    <CardHeader>
-                      <CardTitle>Profile Details</CardTitle>
-                      <CardDescription>Update your profile information to help mentees find you</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <Label htmlFor="name">Full Name</Label>
-                          <Input
-                            id="name"
-                            value={profile.name}
-                            onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                            className="bg-gray-800 border-gray-700"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="email">Email</Label>
-                          <Input
-                            id="email"
-                            value={profile.email}
-                            onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                            className="bg-gray-800 border-gray-700"
-                            disabled
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="bio">Professional Bio</Label>
-                        <Textarea
-                          id="bio"
-                          value={profile.bio}
-                          onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                          className="bg-gray-800 border-gray-700 min-h-[120px]"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="skills">Skills & Expertise</Label>
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          {profile.skills.map((skill, index) => (
-                            <Badge
-                              key={index}
-                              variant="outline"
-                              className="bg-gray-800 border-gray-700 group hover:border-red-500/50"
-                            >
-                              {skill}
-                              <button
-                                className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => handleRemoveSkill(skill)}
-                              >
-                                <X className="h-3 w-3 text-red-500" />
-                              </button>
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="flex gap-2">
-                          <Input
-                            id="newSkill"
-                            placeholder="Add a skill"
-                            value={newSkill}
-                            onChange={(e) => setNewSkill(e.target.value)}
-                            className="bg-gray-800 border-gray-700"
-                          />
-                          <Button
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="skills" className="text-sm text-gray-400">Skills & Expertise</Label>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {profile.skills.map((skill, index) => (
+                          <Badge
+                            key={index}
                             variant="outline"
-                            className="border-cyan-500 text-cyan-500 hover:bg-cyan-950"
-                            onClick={handleAddSkill}
+                            className="bg-gray-800 border-gray-700 group"
                           >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* <div className="space-y-2">
-                          <Label htmlFor="experience">Years of Experience</Label>
-                          <Select
-                            value={profile.experience}
-                            onValueChange={(value) => setProfile({ ...profile, experience: value })}
-                          >
-                            <SelectTrigger className="bg-gray-800 border-gray-700">
-                              <SelectValue placeholder="Select years of experience" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="1-3">1-3 years</SelectItem>
-                              <SelectItem value="4-6">4-6 years</SelectItem>
-                              <SelectItem value="7-10">7-10 years</SelectItem>
-                              <SelectItem value="10+">10+ years</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div> */}
-                        <div className="space-y-2">
-                          <Label htmlFor="communication">Preferred Communication Method</Label>
-                          <Select
-                            value={profile.communicationPreference}
-                            onValueChange={(value) => setProfile({ ...profile, communicationPreference: value })}
-                          >
-                            <SelectTrigger className="bg-gray-800 border-gray-700">
-                              <SelectValue placeholder="Select communication method" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="video">Video Call</SelectItem>
-                              <SelectItem value="chat">Chat</SelectItem>
-                              <SelectItem value="email">Email</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="languages">Languages</Label>
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          {profile.languages.map((language, index) => (
-                            <Badge
-                              key={index}
-                              variant="outline"
-                              className="bg-gray-800 border-gray-700 group hover:border-red-500/50"
+                            {skill}
+                            <button
+                              className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => handleRemoveSkill(skill)}
                             >
-                              {language}
-                              <button
-                                className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => handleRemoveLanguage(language)}
-                              >
-                                <X className="h-3 w-3 text-red-500" />
-                              </button>
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="flex gap-2">
-                          <Input
-                            id="newLanguage"
-                            placeholder="Add a language"
-                            value={newLanguage}
-                            onChange={(e) => setNewLanguage(e.target.value)}
-                            className="bg-gray-800 border-gray-700"
-                          />
-                          <Button
+                              <X className="h-3 w-3 text-red-500" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="flex space-x-2">
+                        <Input
+                          value={newSkill}
+                          onChange={(e) => setNewSkill(e.target.value)}
+                          placeholder="Add a new skill"
+                          className="bg-gray-800 border-gray-700"
+                        />
+                        <Button
+                          variant="outline"
+                          className="border-cyan-500 text-cyan-500 hover:bg-cyan-950"
+                          onClick={handleAddSkill}
+                          disabled={!newSkill}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="languages" className="text-sm text-gray-400">Languages</Label>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {profile.languages.map((language, index) => (
+                          <Badge
+                            key={index}
                             variant="outline"
-                            className="border-cyan-500 text-cyan-500 hover:bg-cyan-950"
-                            onClick={handleAddLanguage}
+                            className="bg-gray-800 border-gray-700 group"
                           >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add
-                          </Button>
-                        </div>
+                            {language}
+                            <button
+                              className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => handleRemoveLanguage(language)}
+                            >
+                              <X className="h-3 w-3 text-red-500" />
+                            </button>
+                          </Badge>
+                        ))}
                       </div>
-
-                      <div className="space-y-2">
-                        <Label>Availability</Label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                            <h4 className="font-medium mb-2">Current Availability</h4>
-                            {profile.availability.length > 0 ? (
-                              <div className="space-y-3">
-                                {profile.availability.map((day, dayIndex) => (
-                                  <div key={dayIndex}>
-                                    <h5 className="text-sm font-medium text-gray-400">{day.day}</h5>
-                                    <div className="flex flex-wrap gap-2 mt-1">
-                                      {day.slots.map((slot, slotIndex) => (
-                                        <Badge
-                                          key={slotIndex}
-                                          variant="outline"
-                                          className="bg-gray-700 border-gray-600 group hover:border-red-500/50"
-                                        >
-                                          {slot}
-                                          <button
-                                            className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            onClick={() => handleRemoveTimeSlot(day.day, slot)}
-                                          >
-                                            <X className="h-3 w-3 text-red-500" />
-                                          </button>
-                                        </Badge>
-                                      ))}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-gray-500 text-sm">No availability set yet</p>
-                            )}
-                          </div>
-
-                          <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                            <h4 className="font-medium mb-2">Add Time Slot</h4>
-                            <div className="space-y-3">
-                              <div>
-                                <Label htmlFor="day" className="text-sm">
-                                  Day
-                                </Label>
-                                <Select
-                                  value={newTimeSlot.day}
-                                  onValueChange={(value) => setNewTimeSlot({ ...newTimeSlot, day: value })}
-                                >
-                                  <SelectTrigger className="bg-gray-700 border-gray-600">
-                                    <SelectValue placeholder="Select day" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="Monday">Monday</SelectItem>
-                                    <SelectItem value="Tuesday">Tuesday</SelectItem>
-                                    <SelectItem value="Wednesday">Wednesday</SelectItem>
-                                    <SelectItem value="Thursday">Thursday</SelectItem>
-                                    <SelectItem value="Friday">Friday</SelectItem>
-                                    <SelectItem value="Saturday">Saturday</SelectItem>
-                                    <SelectItem value="Sunday">Sunday</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-
-                              <div>
-                                <Label htmlFor="time" className="text-sm">
-                                  Time
-                                </Label>
-                                <Select
-                                  value={newTimeSlot.time}
-                                  onValueChange={(value) => setNewTimeSlot({ ...newTimeSlot, time: value })}
-                                >
-                                  <SelectTrigger className="bg-gray-700 border-gray-600">
-                                    <SelectValue placeholder="Select time" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="9:00 AM - 10:00 AM">9:00 AM - 10:00 AM</SelectItem>
-                                    <SelectItem value="10:00 AM - 11:00 AM">10:00 AM - 11:00 AM</SelectItem>
-                                    <SelectItem value="11:00 AM - 12:00 PM">11:00 AM - 12:00 PM</SelectItem>
-                                    <SelectItem value="1:00 PM - 2:00 PM">1:00 PM - 2:00 PM</SelectItem>
-                                    <SelectItem value="2:00 PM - 3:00 PM">2:00 PM - 3:00 PM</SelectItem>
-                                    <SelectItem value="3:00 PM - 4:00 PM">3:00 PM - 4:00 PM</SelectItem>
-                                    <SelectItem value="4:00 PM - 5:00 PM">4:00 PM - 5:00 PM</SelectItem>
-                                    <SelectItem value="5:00 PM - 6:00 PM">5:00 PM - 6:00 PM</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-
-                              <Button
-                                variant="outline"
-                                className="w-full border-cyan-500 text-cyan-500 hover:bg-cyan-950"
-                                onClick={handleAddTimeSlot}
-                                disabled={!newTimeSlot.day || !newTimeSlot.time}
-                              >
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Time Slot
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
+                      <div className="flex space-x-2">
+                        <Input
+                          value={newLanguage}
+                          onChange={(e) => setNewLanguage(e.target.value)}
+                          placeholder="Add a new language"
+                          className="bg-gray-800 border-gray-700"
+                        />
+                        <Button
+                          variant="outline"
+                          className="border-cyan-500 text-cyan-500 hover:bg-cyan-950"
+                          onClick={handleAddLanguage}
+                          disabled={!newLanguage}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
                       </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button
-                        className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
-                        onClick={handleProfileUpdate}
-                        disabled={saving}
-                      >
-                        {saving ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Saving...
-                          </>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="communication" className="text-sm text-gray-400">Preferred Communication</Label>
+                      <Input
+                        id="communication"
+                        value={profile.communicationPreference}
+                        className="bg-gray-800 border-gray-700"
+                        disabled
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="experience" className="text-sm text-gray-400">Experience</Label>
+                      <Input
+                        id="experience"
+                        value={profile.experience}
+                        className="bg-gray-800 border-gray-700"
+                        disabled
+                      />
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-800 pt-6 mt-6">
+                    <div className="mb-4">
+                      <h3 className="text-lg font-medium text-cyan-400">Availability Settings</h3>
+                      <p className="text-sm text-gray-400">Set up when you're available to mentor</p>
+                    </div>
+                  
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="bg-gray-800/60 rounded-lg p-4 border border-gray-700">
+                        <h4 className="font-medium mb-4 text-white">Current Availability</h4>
+                        {profile.availability.length > 0 ? (
+                          <div className="space-y-4">
+                            {profile.availability.map((day, dayIndex) => (
+                              <div key={dayIndex} className="border-b border-gray-700 last:border-0 pb-3 last:pb-0">
+                                <h5 className="text-sm font-medium text-cyan-400 mb-2">{day.day}</h5>
+                                <div className="flex flex-wrap gap-2">
+                                  {day.slots.map((slot, slotIndex) => (
+                                    <Badge
+                                      key={slotIndex}
+                                      variant="outline"
+                                      className="bg-gray-700 border-gray-600 group hover:border-red-500/50"
+                                    >
+                                      {slot}
+                                      <button
+                                        className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => handleRemoveTimeSlot(day.day, slot)}
+                                      >
+                                        <X className="h-3 w-3 text-red-500" />
+                                      </button>
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         ) : (
-                          <>
-                            <Save className="h-4 w-4 mr-2" />
-                            Save Changes
-                          </>
+                          <p className="text-gray-500 text-sm">No availability set yet</p>
                         )}
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </div>
-              </div>
+                      </div>
+
+                      <div className="bg-gray-800/60 rounded-lg p-4 border border-gray-700">
+                        <h4 className="font-medium mb-4 text-white">Add Time Slot</h4>
+                        <div className="space-y-3">
+                          <div>
+                            <Label htmlFor="day" className="text-sm text-gray-400">
+                              Day
+                            </Label>
+                            <Select
+                              value={newTimeSlot.day}
+                              onValueChange={(value) => setNewTimeSlot({ ...newTimeSlot, day: value })}
+                            >
+                              <SelectTrigger className="bg-gray-700 border-gray-600">
+                                <SelectValue placeholder="Select day" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Monday">Monday</SelectItem>
+                                <SelectItem value="Tuesday">Tuesday</SelectItem>
+                                <SelectItem value="Wednesday">Wednesday</SelectItem>
+                                <SelectItem value="Thursday">Thursday</SelectItem>
+                                <SelectItem value="Friday">Friday</SelectItem>
+                                <SelectItem value="Saturday">Saturday</SelectItem>
+                                <SelectItem value="Sunday">Sunday</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="time" className="text-sm text-gray-400">
+                              Time
+                            </Label>
+                            <Select
+                              value={newTimeSlot.time}
+                              onValueChange={(value) => setNewTimeSlot({ ...newTimeSlot, time: value })}
+                            >
+                              <SelectTrigger className="bg-gray-700 border-gray-600">
+                                <SelectValue placeholder="Select time" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="9:00 AM - 10:00 AM">9:00 AM - 10:00 AM</SelectItem>
+                                <SelectItem value="10:00 AM - 11:00 AM">10:00 AM - 11:00 AM</SelectItem>
+                                <SelectItem value="11:00 AM - 12:00 PM">11:00 AM - 12:00 PM</SelectItem>
+                                <SelectItem value="1:00 PM - 2:00 PM">1:00 PM - 2:00 PM</SelectItem>
+                                <SelectItem value="2:00 PM - 3:00 PM">2:00 PM - 3:00 PM</SelectItem>
+                                <SelectItem value="3:00 PM - 4:00 PM">3:00 PM - 4:00 PM</SelectItem>
+                                <SelectItem value="4:00 PM - 5:00 PM">4:00 PM - 5:00 PM</SelectItem>
+                                <SelectItem value="5:00 PM - 6:00 PM">5:00 PM - 6:00 PM</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <Button
+                            variant="outline"
+                            className="w-full border-cyan-500 text-cyan-500 hover:bg-cyan-950"
+                            onClick={handleAddTimeSlot}
+                            disabled={!newTimeSlot.day || !newTimeSlot.time}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Time Slot
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="border-t border-gray-800 pt-6">
+                  <Button
+                    className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
+                    onClick={handleProfileUpdate}
+                    disabled={saving}
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Save Changes
+                      </>
+                    )}
+                  </Button>
+                </CardFooter>
+              </Card>
             </TabsContent>
 
             <TabsContent value="sessions">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-2">
-                  <Card className="bg-gray-900/60 backdrop-blur-lg border-gray-800">
+                  <Card className="bg-gray-900/60 backdrop-blur-lg border-gray-800 h-full">
                     <CardHeader>
-                      <CardTitle>Upcoming Sessions</CardTitle>
+                      <CardTitle className="text-xl text-cyan-400">Upcoming Sessions</CardTitle>
                       <CardDescription>Your scheduled mentoring sessions</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -699,12 +1023,12 @@ export default function MentorDashboard() {
                           {upcomingSessions.map((session) => (
                             <div
                               key={session.id}
-                              className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-cyan-500/50 transition-colors"
+                              className="bg-gray-800/60 rounded-lg p-4 border border-gray-700 hover:border-cyan-500/50 transition-colors"
                             >
                               <div className="flex items-start justify-between">
                                 <div className="flex items-start gap-3">
                                   <Avatar>
-                                    <AvatarImage src={session.menteeImage} alt={session.menteeName} />
+                                    {/* <AvatarImage src={session.menteeImage} alt={session.menteeName} /> */}
                                     <AvatarFallback>{session.menteeName.charAt(0)}</AvatarFallback>
                                   </Avatar>
                                   <div>
@@ -746,7 +1070,7 @@ export default function MentorDashboard() {
                           ))}
                         </div>
                       ) : (
-                        <div className="text-center py-8">
+                        <div className="text-center py-12 bg-gray-800/40 rounded-lg border border-gray-700">
                           <CalendarIcon className="h-12 w-12 mx-auto text-gray-500 mb-4" />
                           <h3 className="text-lg font-medium mb-2">No upcoming sessions</h3>
                           <p className="text-gray-400 mb-4">You don't have any scheduled sessions yet.</p>
@@ -759,7 +1083,7 @@ export default function MentorDashboard() {
                 <div>
                   <Card className="bg-gray-900/60 backdrop-blur-lg border-gray-800">
                     <CardHeader>
-                      <CardTitle>Calendar</CardTitle>
+                      <CardTitle className="text-xl text-cyan-400">Calendar</CardTitle>
                       <CardDescription>View your schedule</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -770,8 +1094,8 @@ export default function MentorDashboard() {
                         className="rounded-md border border-gray-800 bg-gray-900/50"
                       />
 
-                      <div className="mt-4">
-                        <h4 className="font-medium mb-2">
+                      <div className="mt-6 bg-gray-800/60 rounded-lg p-4 border border-gray-700">
+                        <h4 className="font-medium mb-3 text-cyan-400">
                           {selectedDate?.toLocaleDateString("en-US", {
                             weekday: "long",
                             month: "long",
@@ -788,7 +1112,7 @@ export default function MentorDashboard() {
                             sessionDate.getFullYear() === selectedDate.getFullYear()
                           )
                         }).length > 0 ? (
-                          <div className="space-y-2">
+                          <div className="space-y-3">
                             {upcomingSessions
                               .filter((session) => {
                                 const sessionDate = new Date(session.date)
@@ -800,9 +1124,9 @@ export default function MentorDashboard() {
                                 )
                               })
                               .map((session) => (
-                                <div key={session.id} className="bg-gray-800 rounded p-2 border border-gray-700">
+                                <div key={session.id} className="bg-gray-800/80 rounded p-3 border border-gray-700 hover:border-cyan-500/50 transition-colors">
                                   <p className="font-medium text-sm">{session.topic}</p>
-                                  <div className="flex justify-between text-xs text-gray-400 mt-1">
+                                  <div className="flex justify-between text-xs text-gray-400 mt-2">
                                     <span>
                                       {new Date(session.date).toLocaleTimeString([], {
                                         hour: "2-digit",
@@ -815,7 +1139,10 @@ export default function MentorDashboard() {
                               ))}
                           </div>
                         ) : (
-                          <p className="text-gray-500 text-sm">No sessions scheduled for this day</p>
+                          <div className="text-center py-6">
+                            <p className="text-gray-500 text-sm">No sessions scheduled for this day</p>
+                            <p className="text-gray-600 text-xs mt-1">Select another date or add a new session</p>
+                          </div>
                         )}
                       </div>
                     </CardContent>

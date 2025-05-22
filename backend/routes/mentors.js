@@ -3,7 +3,8 @@ const {
   getMentors,
   getMentor,
   updateMentorProfile,
-  getMentorProfile
+  getMentorProfile,
+  getRecommendedMentors
 } = require('../controllers/mentors');
 
 const { protect, authorize } = require('../middlewares/auth');
@@ -22,6 +23,14 @@ router.route('/')
 router.route('/profile')
   .get(protect, authorize('mentor'), getMentorProfile)
   .put(protect, authorize('mentor'), updateMentorProfile);
+
+// Add explicit route for mentor availability
+router.route('/profile/availability')
+  .put(protect, authorize('mentor'), updateMentorProfile);
+
+// Route for recommended mentors
+router.route('/recommended/:menteeId')
+  .get(protect, getRecommendedMentors);
 
 router.route('/:id')
   .get(getMentor);

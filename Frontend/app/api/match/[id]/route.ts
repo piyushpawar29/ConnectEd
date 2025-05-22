@@ -25,7 +25,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
     let token = null;
     if (!authHeader) {
       const cookieStore = cookies();
-      token = cookieStore.get("token")?.value;
+      const tokenCookie = (await cookieStore).get("token");
+      token = tokenCookie ? tokenCookie.value : null;
       
       if (!token) {
         return NextResponse.json({ error: "Authentication required" }, { status: 401 });
@@ -50,7 +51,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
         rating: mentor.rating || 4.5,
         reviews: mentor.reviews || 0,
         expertise: mentor.skills || mentor.expertise || [],
-        matchScore: mentor.matchScore || Math.floor(Math.random() * 30) + 70
+        matchScore: mentor.matchScore || 85 // Default match score if not provided by backend
       }));
       
       return NextResponse.json(recommendedMentors);
@@ -75,11 +76,11 @@ export async function GET(request: Request, { params }: { params: { id: string }
       rating: mentor.rating || 4.5,
       reviews: mentor.reviews || 0,
       expertise: mentor.skills || mentor.expertise || [],
-      matchScore: Math.floor(Math.random() * 30) + 70 // Score between 70-100
+      matchScore: 80 // Default match score for all mentors when no specific recommendation algorithm is available
     }));
     
     // Sort by match score, highest first
-    mentors.sort((a, b) => b.matchScore - a.matchScore);
+    mentors.sort((a: { matchScore: number; }, b: { matchScore: number; }) => b.matchScore - a.matchScore);
     
     // Return top 5 recommendations
     return NextResponse.json(mentors.slice(0, 5));

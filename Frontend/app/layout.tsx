@@ -39,7 +39,12 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-          {children}
+          {/* Navbar will be conditionally rendered inside the component */}
+          <div className="min-h-screen flex flex-col">
+            <div className="flex-grow pt-16">
+              {children}
+            </div>
+          </div>
         </ThemeProvider>
       </body>
     </html>

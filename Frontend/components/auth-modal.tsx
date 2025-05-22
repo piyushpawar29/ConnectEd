@@ -1,9 +1,6 @@
 "use client"
-
 import { Badge } from "@/components/ui/badge"
-
 import type React from "react"
-
 import { useState } from "react"
 import zxcvbn from "zxcvbn"
 import { motion } from "framer-motion"
@@ -871,7 +868,7 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-gray-900 border border-gray-800 rounded-xl w-full max-w-md p-6 relative"
+        className="bg-gray-900 border border-gray-800 rounded-xl w-full max-w-md p-6 relative max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <button className="absolute top-4 right-4 text-gray-400 hover:text-white" onClick={onClose}>
@@ -889,9 +886,9 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
           <p className="text-gray-400 mt-1">
             {type === "login" ? "Sign in to your account" : "Join thousands of learners and mentors"}
           </p>
-          
+          </div>
           {/* Debug mode toggle */}
-          <div className="absolute top-4 left-4">
+          {/* <div className="absolute top-4 left-4">
             <button 
               className="text-xs text-gray-500 hover:text-gray-300"
               onClick={(e) => {
@@ -901,10 +898,10 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
             >
               Debug: {debugMode ? "ON" : "OFF"}
             </button>
-          </div>
+          </div> */}
           
           {/* Backend connection test */}
-          {debugMode && (
+          {/* {debugMode && (
             <div className="mt-2">
               <button
                 className="text-xs text-cyan-500 hover:text-cyan-400"
@@ -918,7 +915,7 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
               <div className="text-xs text-gray-500 mt-1">Backend URL: http://localhost:5001</div>
               
               {/* Debug dashboard links */}
-              <div className="mt-2 space-x-2">
+            {/*  <div className="mt-2 space-x-2">
                 <a href="/dashboard/mentor" className="text-xs text-purple-500 hover:text-purple-400">
                   Mentor Dashboard
                 </a>
@@ -929,7 +926,7 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
               </div>
             </div>
           )}
-        </div>
+        </div> */}
 
         <Tabs defaultValue={type} onValueChange={(value) => onSwitchType(value as "login" | "signup")}>
           <TabsList className="grid grid-cols-2 mb-6">
@@ -1142,4 +1139,3 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
     </motion.div>
   )
 }
-

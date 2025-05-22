@@ -238,4 +238,98 @@ exports.getMentorProfile = async (req, res) => {
       message: error.message
     });
   }
+};
+
+// @desc    Get recommended mentors for a mentee
+// @route   GET /api/mentors/recommended/:menteeId
+// @access  Private
+exports.getRecommendedMentors = async (req, res) => {
+  try {
+    const menteeId = req.params.menteeId;
+    
+    // Get mentee profile to find interests and preferences
+    const menteeUser = await User.findById(menteeId);
+    
+    if (!menteeUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'Mentee not found'
+      });
+    }
+    
+    const MenteeProfile = require('../models/MenteeProfile');
+    const menteeProfile = await MenteeProfile.findOne({ user: menteeId });
+    
+    if (!menteeProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Mentee profile not found'
+      });
+    }
+    
+    // Find mentor users
+    const mentorUsers = await User.find({ role: 'mentor' });
+    const mentorIds = mentorUsers.map(user => user._id);
+    
+    // Get all mentor profiles
+    let mentorProfiles = await MentorProfile.find({ user: { $in: mentorIds } })
+      .populate({
+        path: 'user',
+        select: 'name email avatar bio'
+      });
+    
+    // Calculate match scores based on interests and expertise
+    const menteeInterests = menteeProfile.interests || [];
+    const menteeLanguages = menteeProfile.preferredLanguages || [];
+    
+    // Add match score to each mentor
+    const recommendedMentors = mentorProfiles.map(mentor => {
+      const mentorExpertise = mentor.expertise || [];
+      const mentorLanguages = mentor.languages || [];
+      
+      // Calculate match score based on overlapping interests/expertise
+      let matchScore = 0;
+      
+      // Match based on expertise/interests overlap
+      menteeInterests.forEach(interest => {
+        if (mentorExpertise.some(exp => exp.toLowerCase().includes(interest.toLowerCase()) || 
+                               interest.toLowerCase().includes(exp.toLowerCase()))) {
+          matchScore += 15; // Higher weight for direct expertise match
+        }
+      });
+      
+      // Match based on language preferences
+      menteeLanguages.forEach(language => {
+        if (mentorLanguages.includes(language)) {
+          matchScore += 10;
+        }
+      });
+      
+      // Add some weight for rating
+      matchScore += (mentor.rating || 4.5) * 5;
+      
+      // Normalize score to be between 70-100
+      matchScore = Math.min(100, Math.max(70, 70 + matchScore));
+      
+      // Return mentor with match score
+      return {
+        ...mentor.toObject(),
+        matchScore: Math.round(matchScore)
+      };
+    });
+    
+    // Sort by match score (highest first)
+    recommendedMentors.sort((a, b) => b.matchScore - a.matchScore);
+    
+    // Return top 5 recommended mentors
+    res.status(200).json({
+      success: true,
+      data: recommendedMentors.slice(0, 5)
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 }; 

@@ -1,66 +1,6 @@
 import { NextResponse } from "next/server"
 import axios from 'axios';
 
-// Mock data for mentors
-// const mentors = [
-//   {
-//     id: 1,
-//     name: "Dr. Sarah Johnson",
-//     role: "AI Research Scientist",
-//     company: "TechInnovate",
-//     image: "/placeholder.svg?height=400&width=300",
-//     rating: 4.9,
-//     reviews: 127,
-//     hourlyRate: 120,
-//     expertise: ["Machine Learning", "Neural Networks", "Computer Vision", "Research Methods"],
-//     bio: "Former lead AI researcher at Google with 10+ years of experience in machine learning and neural networks. I help aspiring AI researchers and practitioners develop cutting-edge skills and navigate their career path.",
-//     availability: "Evenings & Weekends",
-//     category: "Technology",
-//   },
-//   {
-//     id: 2,
-//     name: "Michael Chen",
-//     role: "Senior Product Manager",
-//     company: "ProductSphere",
-//     image: "/placeholder.svg?height=400&width=300",
-//     rating: 4.8,
-//     reviews: 93,
-//     hourlyRate: 95,
-//     expertise: ["Product Strategy", "User Research", "Roadmapping", "Go-to-Market"],
-//     bio: "Product leader with experience at Amazon, Airbnb, and two successful startups. I specialize in helping product managers level up their skills and advance their careers through practical, real-world guidance.",
-//     availability: "Weekdays",
-//     category: "Business",
-//   },
-//   {
-//     id: 3,
-//     name: "Jessica Williams",
-//     role: "UX Design Director",
-//     company: "DesignCo",
-//     image: "/placeholder.svg?height=400&width=300",
-//     rating: 5.0,
-//     reviews: 156,
-//     hourlyRate: 110,
-//     expertise: ["UX Strategy", "Design Systems", "User Testing", "Design Leadership"],
-//     bio: "Award-winning design leader who has built and led design teams at Spotify and Netflix. I'm passionate about helping designers develop both their craft and leadership skills to create meaningful impact.",
-//     availability: "Flexible",
-//     category: "Design",
-//   },
-//   {
-//     id: 4,
-//     name: "David Rodriguez",
-//     role: "Engineering Manager",
-//     company: "TechGrowth",
-//     image: "/placeholder.svg?height=400&width=300",
-//     rating: 4.7,
-//     reviews: 84,
-//     hourlyRate: 100,
-//     expertise: ["Engineering Leadership", "System Architecture", "Team Building", "Career Development"],
-//     bio: "Engineering leader with 15+ years of experience scaling teams and systems at Microsoft and Stripe. I help engineers and engineering managers navigate technical and leadership challenges.",
-//     availability: "Weekday Evenings",
-//     category: "Technology",
-//   },
-// ]
-
 interface Mentor {
   id: string
   name: string
@@ -92,12 +32,16 @@ export async function GET(request: Request) {
     // Get authorization header from request
     const authHeader = request.headers.get('authorization');
     
-    // Fetch mentors from the backend API
-    const response = await axios.get(`${process.env.BACKEND_URL}/api/mentors`, {
-      headers: authHeader ? { 'Authorization': authHeader } : {}
+    // Ensure we have a valid backend URL with fallback
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:5001';
+    
+    // Fetch mentors from the backend API with timeout and proper error handling
+    const response = await axios.get(`${backendUrl}/api/mentors`, {
+      headers: authHeader ? { 'Authorization': authHeader } : {},
+      timeout: 5000 // 5 second timeout
     });
 
-    let backendMentors = response.data.data || [];
+    const backendMentors = response.data.data || [];
 
     // Transform the data to match the frontend structure
     const mentors = backendMentors.map((mentor: any) => ({
@@ -146,11 +90,14 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ mentors: filteredMentors })
-  } catch (error) {
-    console.error("Error fetching mentors:", error);
+  } catch (error: any) {
+    console.error("Error fetching mentors from backend:", error.message);
     
-    // Return empty array on error to prevent rendering issues
-    return NextResponse.json({ mentors: [] });
+    // Return empty array on error instead of using mock data
+    return NextResponse.json({ 
+      mentors: [],
+      error: "Failed to fetch mentors data. Please try again later."
+    });
   }
 }
 
