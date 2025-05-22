@@ -35,29 +35,25 @@ export async function POST(request: Request) {
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:5001';
     
     try {
+      // Map the request to match what the backend expects
+      const backendPayload = {
+        mentor: mentorUserId,  // Backend expects 'mentor', not 'mentorUserId'
+        title,
+        description: description || title,
+        date,
+        duration,
+        communicationType: communicationType === 'text' ? 'Chat' : 'Video Call'
+      };
+      
       console.log('Sending request to backend:', {
         url: `${backendUrl}/api/sessions`,
-        data: {
-          mentorUserId: mentorUserId,
-          title,
-          description: description || title,
-          date,
-          duration,
-          communicationType: communicationType || 'video'
-        },
+        data: backendPayload,
         headers: { Authorization: authHeader }
       });
       
       const response = await axios.post(
         `${backendUrl}/api/sessions`,
-        {
-          mentorUserId: mentorUserId,
-          title,
-          description: description || title,
-          date,
-          duration,
-          communicationType: communicationType || 'video'
-        },
+        backendPayload,
         { headers: { Authorization: authHeader } }
       );
       

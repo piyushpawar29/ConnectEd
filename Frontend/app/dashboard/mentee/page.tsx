@@ -135,12 +135,25 @@ export default function MenteeDashboard() {
         
         try {
           // Fetch mentee sessions with auth header
-          const sessionsResponse = await axios.get('/api/mentee/sessions', { headers });
-          if (sessionsResponse.data && Array.isArray(sessionsResponse.data)) {
-            setUpcomingSessions(sessionsResponse.data);
+          console.log('Fetching sessions with token:', token ? 'Token exists' : 'No token');
+          
+          const sessionsResponse = await axios.get('http://localhost:5001/api/sessions', { 
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            } 
+          });
+          
+          console.log('Sessions API response:', sessionsResponse.data);
+          
+          if (sessionsResponse.data && sessionsResponse.data.data && Array.isArray(sessionsResponse.data.data)) {
+            setUpcomingSessions(sessionsResponse.data.data);
+            console.log('Mentee sessions fetched successfully:', sessionsResponse.data.data);
+          } else {
+            console.warn('Sessions data format unexpected:', sessionsResponse.data);
           }
         } catch (sessionsError) {
-          console.error("Error fetching sessions:", sessionsError);
+         // console.error("Error fetching sessions:", sessionsError.response?.data || sessionsError.message);
           // Continue with other data fetching even if sessions fail
         }
         
@@ -243,7 +256,7 @@ export default function MenteeDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 pt-24 pb-16">
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 pb-16">
       <header className="absolute top-4 left-0 w-full h-14 bg-gray-900/50 backdrop-blur-sm z-10">
             <div className="container mx-auto px-4 flex items-center justify-between">
              <Link href="/" className="flex items-center gap-2 z-50">
@@ -262,7 +275,7 @@ export default function MenteeDashboard() {
                     Home Page
                   </Button>
                 </Link>
-                <Link href="/logout" passHref>
+                <Link href="/" passHref>
                   <Button variant="outline" className="border-cyan-500 text-cyan-500 hover:bg-cyan-950">
                     
                     Logout
@@ -324,10 +337,18 @@ export default function MenteeDashboard() {
                         </div>
                       </div>
                       <div className="mt-3 flex gap-2">
+                     
+                        
+                         
+                         
+                        <a href="https://meet.google.com/bfy-jzcd-hxv" target="_blank" rel="noopener noreferrer">
                         <Button variant="outline" className="border-cyan-500 text-cyan-500 hover:bg-cyan-950">
                           <Video className="h-4 w-4 mr-2" />
-                          Join Session
+                        Join Session
+                        
                         </Button>
+                        </a>  
+                        
                         <Button variant="outline" className="border-gray-700 hover:bg-gray-800">
                           <MessageSquare className="h-4 w-4 mr-2" />
                           Message

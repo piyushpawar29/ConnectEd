@@ -16,7 +16,19 @@ interface Mentor {
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
-    const menteeId = params.id;
+    // Ensure params is properly awaited and validated
+    if (!params) {
+      return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
+    }
+    
+    // Safely extract and validate the ID parameter
+    const { id } = params;
+    if (!id) {
+      return NextResponse.json({ error: "Invalid mentee ID" }, { status: 400 });
+    }
+    
+    const menteeId = id;
+    console.log('Fetching match recommendations for mentee:', menteeId);
     
     // Get authorization header from request
     const authHeader = request.headers.get('authorization');
@@ -24,8 +36,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
     // Fallback to cookie if needed
     let token = null;
     if (!authHeader) {
-      const cookieStore = cookies();
-      const tokenCookie = (await cookieStore).get("token");
+      const cookieStore = await cookies();
+      const tokenCookie = cookieStore.get("token");
       token = tokenCookie ? tokenCookie.value : null;
       
       if (!token) {

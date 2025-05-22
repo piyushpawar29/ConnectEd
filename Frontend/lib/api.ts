@@ -99,22 +99,22 @@ export const authAPI = {
 export const mentorAPI = {
   // Use frontendApi for client-side requests
   getAllMentors(params?: any) {
-    return frontendApi.get("/mentors", { params })
+    return api.get("/mentors", { params })
   },
   getMentor(id: string) {
-    return frontendApi.get(`/mentors/${id}`)
+    return api.get(`/mentors/${id}`)
   },
   getMentorProfile() {
-    return frontendApi.get("/mentors/profile")
+    return api.get("/mentors/profile")
   },
   updateMentorProfile(data: any) {
-    return frontendApi.put("/mentors/profile", data)
+    return api.put("/mentors/profile", data)
   },
   getMentorReviews(mentorId: string) {
-    return frontendApi.get(`/reviews/${mentorId}`)
+    return api.get(`/reviews/${mentorId}`)
   },
   submitReview(mentorId: string, data: { rating: number, comment: string }) {
-    return frontendApi.post(`/mentors/${mentorId}/reviews`, data)
+    return api.post(`/mentors/${mentorId}/reviews`, data)
   },
 }
 
@@ -131,38 +131,38 @@ export const menteeAPI = {
 export const sessionAPI = {
   // Use frontendApi for client-side requests
   getSessions() {
-    return frontendApi.get("/sessions")
+    return api.get("/sessions")
   },
   getMenteeSessions() {
-    return frontendApi.get("/mentee/sessions")
+    return api.get("/mentee/sessions")
   },
   getMentorSessions() {
-    return frontendApi.get("/mentor/sessions")
+    return api.get("/mentor/sessions")
   },
   getSession(id: string) {
-    return frontendApi.get(`/sessions/${id}`)
+    return api.get(`/sessions/${id}`)
   },
   createSession(data: any) {
-    return frontendApi.post("/sessions", data)
+    return api.post("/sessions", data)
   },
   bookSession(data: {
-    mentorUserId: string,
+    mentor: string,
     title: string,
     description?: string,
     date: string,
     duration: number,
     communicationType: string
   }) {
-    return frontendApi.post("/sessions", data)
+    return api.post("/sessions", data)
   },
   updateSession(id: string, data: any) {
-    return frontendApi.put(`/sessions/${id}`, data)
+    return api.put(`/sessions/${id}`, data)
   },
   deleteSession(id: string) {
-    return frontendApi.delete(`/sessions/${id}`)
+    return api.delete(`/sessions/${id}`)
   },
   updateSessionStatus(id: string, status: string) {
-    return frontendApi.put(`/sessions/${id}/status`, { status })
+    return api.put(`/sessions/${id}/status`, { status })
   },
 }
 
@@ -170,19 +170,19 @@ export const sessionAPI = {
 export const reviewAPI = {
   // Use frontendApi for client-side requests
   addReview(mentorId: string, data: any) {
-    return frontendApi.post(`/reviews/${mentorId}`, data)
+    return api.post(`/reviews/${mentorId}`, data)
   },
   updateReview(id: string, data: any) {
-    return frontendApi.put(`/reviews/${id}`, data)
+    return api.put(`/reviews/${id}`, data)
   },
   deleteReview(id: string) {
-    return frontendApi.delete(`/reviews/${id}`)
+    return api.delete(`/reviews/${id}`)
   },
 }
 
 // Message APIs
 export const messageAPI = {
-  getConversations: () => api.get("/messages/conversations"),
+  getConversations: () =>  api.get("/messages/conversations"),
   getMessages: (userId: string) => api.get(`/messages/${userId}`),
   sendMessage: (data: any) => api.post("/messages", data),
   deleteMessage: (id: string) => api.delete(`/messages/${id}`),

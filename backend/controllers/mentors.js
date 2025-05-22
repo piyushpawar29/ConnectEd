@@ -120,10 +120,27 @@ exports.getMentors = async (req, res) => {
 // @access  Public
 exports.getMentor = async (req, res) => {
   try {
-    const mentor = await MentorProfile.findById(req.params.id).populate({
-      path: 'user',
-      select: 'name email avatar'
-    });
+    // Try to find mentor by ID (handles both ObjectId and string ID)
+    let mentor;
+    
+    try {
+      // First try to find by MongoDB _id
+      mentor = await MentorProfile.findById(req.params.id).populate({
+        path: 'user',
+        select: 'name email avatar bio'
+      });
+    } catch (err) {
+      // If that fails, it might not be a valid ObjectId
+      console.log('Error finding mentor by ID:', err.message);
+    }
+
+    // If not found by ID, try to find by user field
+    if (!mentor) {
+      mentor = await MentorProfile.findOne({ user: req.params.id }).populate({
+        path: 'user',
+        select: 'name email avatar bio'
+      });
+    }
 
     if (!mentor) {
       return res.status(404).json({
@@ -144,6 +161,7 @@ exports.getMentor = async (req, res) => {
       data: { mentor, reviews }
     });
   } catch (error) {
+    console.error('Error in getMentor:', error);
     res.status(500).json({
       success: false,
       message: error.message

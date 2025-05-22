@@ -243,6 +243,70 @@ export default function MentorDashboard() {
     }
   };
 
+  // Fetch sessions from API
+  const fetchSessions = async (token: string | null) => {
+    try {
+      console.log('Fetching mentor sessions...');
+      
+      // Call our Next.js API route for mentor sessions
+      const headers: Record<string, string> = {
+        'Accept': 'application/json'
+      };
+      
+      // Only add Authorization header if token exists
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch('/api/mentor/sessions', { headers });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch sessions: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Sessions fetched successfully:', data);
+      
+      // Update state with the fetched sessions
+      setUpcomingSessions(data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+      toast({
+        title: "Error Fetching Sessions",
+        description: "Could not load your upcoming sessions. Using sample data instead.",
+        variant: "destructive",
+      });
+      
+      // Use mock data for testing if API fails
+      const mockSessions = [
+        {
+          id: "s1",
+          menteeId: "mentee1",
+          menteeName: "John Doe",
+          menteeImage: "/placeholder.svg",
+          date: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+          duration: 60,
+          topic: "Introduction to Machine Learning",
+          status: "scheduled"
+        },
+        {
+          id: "s2",
+          menteeId: "mentee2",
+          menteeName: "Jane Smith",
+          menteeImage: "/placeholder.svg",
+          date: new Date(Date.now() + 172800000).toISOString(), // Day after tomorrow
+          duration: 45,
+          topic: "Career Guidance in Tech",
+          status: "scheduled"
+        }
+      ];
+      
+      setUpcomingSessions(mockSessions);
+      return mockSessions;
+    }
+  };
+  
   // Fetch data from backend
   useEffect(() => {
     const fetchData = async () => {
@@ -264,7 +328,7 @@ export default function MentorDashboard() {
             description: "Cannot connect to the backend server. Please ensure it's running at http://localhost:5001",
             variant: "destructive",
           });
-          return; // Exit early if backend is not available
+          // Continue anyway to show UI with mock data
         }
         
         // Get token from localStorage
@@ -281,6 +345,9 @@ export default function MentorDashboard() {
             variant: "destructive",
           });
           setLoading(false);
+          
+          // For testing, we'll still fetch sessions with mock data
+          await fetchSessions(null);
           return;
         }
         
@@ -294,6 +361,9 @@ export default function MentorDashboard() {
           console.log("After removing quotes:");
           debugToken(token);
         }
+        
+        // Fetch sessions first to ensure they appear on the dashboard
+        await fetchSessions(token);
         
         const headers = {
           'Authorization': `Bearer ${token}`,
@@ -688,7 +758,7 @@ export default function MentorDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 pt-24 pb-16">
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900">
       <header className="absolute top-4 left-0 w-full h-14 bg-gray-900/50 backdrop-blur-sm z-10">
       <div className="container mx-auto px-4 flex items-center justify-between">
        <Link href="/" className="flex items-center gap-2 z-50">
@@ -707,7 +777,7 @@ export default function MentorDashboard() {
               Home Page
             </Button>
           </Link>
-          <Link href="/logout" passHref>
+          <Link href="/" passHref>
             <Button variant="outline" className="border-cyan-500 text-cyan-500 hover:bg-cyan-950">
               Logout
             </Button>
@@ -1057,10 +1127,12 @@ export default function MentorDashboard() {
                                 </div>
                               </div>
                               <div className="mt-3 flex gap-2">
+                                <Link href="https://meet.google.com/bfy-jzcd-hxv" target="_blank" rel="noopener noreferrer">
                                 <Button variant="outline" className="border-cyan-500 text-cyan-500 hover:bg-cyan-950">
                                   <Video className="h-4 w-4 mr-2" />
                                   Join Session
                                 </Button>
+                                </Link>
                                 <Button variant="outline" className="border-gray-700 hover:bg-gray-800">
                                   <MessageSquare className="h-4 w-4 mr-2" />
                                   Message

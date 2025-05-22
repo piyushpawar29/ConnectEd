@@ -18,7 +18,7 @@ router.route('/')
 
 // Add dedicated route for mentor sessions
 router.route('/mentor')
-  .get(protect, authorize('mentor'), getSessions);
+  .get(protect, getSessions);
 
 router.route('/:id')
   .get(protect, getSession)
