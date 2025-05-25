@@ -29,6 +29,7 @@ import {
   Loader2,Home
 } from "lucide-react"
 import axios from "axios"
+import GradientSpinner from "@/components/ui/gradient-spinner"
 
 // // Mock data for the mentor profile
 // const mockMentorProfile = {
@@ -703,20 +704,8 @@ export default function MentorDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 pt-24 pb-16">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col space-y-6">
-            <Skeleton className="h-12 w-64" />
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="md:col-span-1">
-                <Skeleton className="h-64 w-full rounded-xl" />
-              </div>
-              <div className="md:col-span-3">
-                <Skeleton className="h-96 w-full rounded-xl" />
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <GradientSpinner size={64} />
       </div>
     )
   }

@@ -54,6 +54,7 @@ import { useToast } from "@/hooks/use-toast"
 import Home from "@/app/page"
 import { format, parse } from "date-fns"
 import axios from "axios"
+import GradientSpinner from "@/components/ui/gradient-spinner"
 
 interface MentorProfilePageProps {
   mentorId: string
@@ -346,67 +347,8 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 pt-24 pb-16">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row gap-8">
-            <div className="md:w-1/3">
-              <div className="bg-gray-900/60 backdrop-blur-lg border border-gray-800 rounded-xl p-6 sticky top-24">
-                <div className="flex flex-col items-center">
-                  <Skeleton className="h-40 w-40 rounded-full mb-4" />
-                  <Skeleton className="h-8 w-48 mb-2" />
-                  <Skeleton className="h-4 w-32 mb-6" />
-                  <Skeleton className="h-10 w-full mb-4" />
-                  <Skeleton className="h-10 w-full mb-6" />
-                  <div className="flex gap-2 mb-6">
-                    <Skeleton className="h-8 w-8 rounded-full" />
-                    <Skeleton className="h-8 w-8 rounded-full" />
-                    <Skeleton className="h-8 w-8 rounded-full" />
-                  </div>
-                  <div className="w-full space-y-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="md:w-2/3">
-              <div className="bg-gray-900/60 backdrop-blur-lg border border-gray-800 rounded-xl p-6 mb-8">
-                <Skeleton className="h-8 w-48 mb-4" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
-                </div>
-              </div>
-
-              <div className="bg-gray-900/60 backdrop-blur-lg border border-gray-800 rounded-xl p-6">
-                <Skeleton className="h-8 w-48 mb-4" />
-                <div className="space-y-4">
-                  <div className="flex items-start gap-4">
-                    <Skeleton className="h-12 w-12 rounded-full shrink-0" />
-                    <div className="w-full">
-                      <Skeleton className="h-4 w-32 mb-2" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-1/2" />
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4">
-                    <Skeleton className="h-12 w-12 rounded-full shrink-0" />
-                    <div className="w-full">
-                      <Skeleton className="h-4 w-32 mb-2" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-1/2" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <GradientSpinner size={64} />
       </div>
     )
   }

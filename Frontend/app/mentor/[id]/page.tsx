@@ -26,6 +26,7 @@ import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Star, ArrowLeft, CalendarIcon, Video, MessageSquare, Languages, Briefcase, Award, Loader2 } from "lucide-react"
 import axios from "axios"
+import GradientSpinner from "@/components/ui/gradient-spinner"
 
 // // Mock data for the mentor profile
 // const mockMentorProfile = {
@@ -332,24 +333,8 @@ export default function MentorProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 pt-24 pb-16">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col space-y-6">
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-10 w-10 rounded-full" />
-              <Skeleton className="h-6 w-32" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-1">
-                <Skeleton className="h-[500px] w-full rounded-xl" />
-              </div>
-              <div className="md:col-span-2">
-                <Skeleton className="h-[200px] w-full rounded-xl mb-6" />
-                <Skeleton className="h-[300px] w-full rounded-xl" />
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <GradientSpinner size={64} />
       </div>
     )
   }

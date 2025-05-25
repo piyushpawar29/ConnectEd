@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     }
 
     // Call the backend API to get the user profile
-    const response = await axios.get(`${process.env.BACKEND_URL}/api/auth/me`, {
+    const response = await axios.get('http://localhost:5001/api/auth/me', {
       headers: {
         Authorization: `Bearer ${authToken}`
       }

@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useRouter } from "next/navigation"
+import GradientSpinner from "@/components/ui/gradient-spinner"
 
 
 interface AuthModalProps {
@@ -670,10 +671,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       >
         {loading ? (
           <>
-            <svg className="animate-spin h-4 w-4 mr-2 inline" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" fill="none" />
-            </svg>
+            <GradientSpinner size={18} className="mr-2" />
             Creating account...
           </>
         ) : (
@@ -780,10 +778,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       >
         {loading ? (
           <>
-            <svg className="animate-spin h-4 w-4 mr-2 inline" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" fill="none" />
-            </svg>
+            <GradientSpinner size={18} className="mr-2" />
             Creating account...
           </>
         ) : (
@@ -897,10 +892,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 >
                   {loading ? (
                     <>
-                      <svg className="animate-spin h-4 w-4 mr-2 inline" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" fill="none" />
-                      </svg>
+                      <GradientSpinner size={18} className="mr-2" />
                       Signing in...
                     </>
                   ) : (
@@ -996,10 +988,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                   >
                     {loading ? (
                       <>
-                        <svg className="animate-spin h-4 w-4 mr-2 inline" viewBox="0 0 24 24">
-                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                          <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" fill="none" />
-                        </svg>
+                        <GradientSpinner size={18} className="mr-2" />
                         Creating account...
                       </>
                     ) : (

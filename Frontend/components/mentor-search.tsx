@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Search, Filter, X, Loader2 } from "lucide-react"
+import { Search, Filter, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
 import axios from "axios"
+import GradientSpinner from "@/components/ui/gradient-spinner"
 
 const categories = ["Technology", "Business", "Design", "Marketing", "Product", "Career", "Leadership", "Finance"]
 
@@ -142,7 +143,7 @@ export default function MentorSearch() {
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <GradientSpinner size={20} className="mr-2" />
                     Searching...
                   </>
                 ) : (
@@ -258,7 +259,7 @@ export default function MentorSearch() {
           {/* Search results preview */}
           {isLoading ? (
             <div className="mt-4 flex justify-center">
-              <Loader2 className="h-8 w-8 text-cyan-500 animate-spin" />
+              <GradientSpinner size={32} />
             </div>
           ) : mentors && mentors.length > 0 && searchTerm ? (
             <motion.div

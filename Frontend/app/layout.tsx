@@ -3,7 +3,6 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import { NavigationProgress } from "@/components/navigation-progress"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -40,8 +39,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-          {/* Navigation progress indicator */}
-          <NavigationProgress />
+          {/* Navigation progress indicator removed */}
           {/* Navbar will be conditionally rendered inside the component */}
           <div className="min-h-screen flex flex-col">
             <div className="flex-grow pt-6">
