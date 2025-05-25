@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import LogoutButton from "@/components/logout-button"
 import { useToast } from "@/hooks/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -777,11 +778,7 @@ export default function MentorDashboard() {
               Home Page
             </Button>
           </Link>
-          <Link href="/" passHref>
-            <Button variant="outline" className="border-cyan-500 text-cyan-500 hover:bg-cyan-950">
-              Logout
-            </Button>
-          </Link>
+          <LogoutButton variant="outline" className="border-cyan-500 text-cyan-500 hover:bg-cyan-950" />
         </div>
       </div>
       </header>

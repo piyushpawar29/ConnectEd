@@ -85,11 +85,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Logout method
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_user');
+  const logout = async () => {
+    try {
+      // Get token from state or localStorage
+      const authToken = token || localStorage.getItem('auth_token');
+      
+      if (authToken) {
+        // Call the logout API
+        await fetch('/api/auth/logout', {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+      }
+      
+      // Clear state
+      setUser(null);
+      setToken(null);
+      
+      // Clear localStorage
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userRole');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if API call fails, clear local state
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userRole');
+    }
   };
 
   const value = {

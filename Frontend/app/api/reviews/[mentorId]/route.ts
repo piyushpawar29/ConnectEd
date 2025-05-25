@@ -27,14 +27,14 @@ export async function POST(request: Request, { params }: { params: { mentorId: s
     try {
       // Log the request details for debugging
       console.log('Sending review to backend:', {
-        url: `${backendUrl}/api/reviews/${mentorId}`,
-        data: { rating, comment, mentorUserId: mentorId },
+        url: `${backendUrl}/api/mentors/${mentorId}/reviews`,
+        data: { rating, comment },
         headers: { Authorization: authHeader }
       });
       
       const response = await axios.post(
-        `${backendUrl}/api/reviews/${mentorId}`,
-        { rating, comment, mentorUserId: mentorId },
+        `${backendUrl}/api/mentors/${mentorId}/reviews`,
+        { rating, comment },
         { headers: { Authorization: authHeader } }
       );
       

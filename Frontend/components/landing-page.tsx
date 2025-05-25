@@ -59,6 +59,10 @@ export default function LandingPage() {
     setShowAuthModal(true)
   }
 
+  function handleBack(): void {
+    throw new Error("Function not implemented.")
+  }
+
   return (
     <div
       className={`min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 text-white transition-colors duration-300 relative overflow-hidden`}
@@ -323,9 +327,9 @@ export default function LandingPage() {
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-2xl blur-xl"></div>
                 <Image
-                  src="/hero-section.png?height=600&width=600"
-                  width={600}
-                  height={500}
+                  src="https://images.unsplash.com/photo-1525130413817-d45c1d127c42?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80"
+                  width={700}
+                  height={700}
                   alt="AI Mentorship Illustration"
                   className="relative z-10 rounded-2xl "
                   priority
@@ -779,7 +783,7 @@ export default function LandingPage() {
             </Button>
           </div>
         </div>
-      </section> */}
+      </section> 
 
       {/* Final CTA Section */}
       <section id="cta" className="py-20 bg-gray-950 relative overflow-hidden">
@@ -891,7 +895,7 @@ export default function LandingPage() {
               <h3 className="font-bold mb-4">Company</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link href="#" className="text-gray-400 hover:text-white transition-colors text-sm">
+                  <Link href="/about" className="text-gray-400 hover:text-white transition-colors text-sm">
                     About Us
                   </Link>
                 </li>
@@ -906,9 +910,9 @@ export default function LandingPage() {
                   </Link>
                 </li> */}
                 <li>
-                  <Link href="#" className="text-gray-400 hover:text-white transition-colors text-sm">
+                  {/* <Link onClick href="/" className="text-gray-400 hover:text-white transition-colors text-sm">
                     Contact
-                  </Link>
+                  </Link> */}
                 </li>
               </ul>
             </div>
@@ -924,6 +928,7 @@ export default function LandingPage() {
       <AnimatePresence>
         {showAuthModal && (
           <AuthModal
+            onBack={handleBack}
             type={authType}
             onClose={() => setShowAuthModal(false)}
             onSwitchType={(type) => setAuthType(type)}

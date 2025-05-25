@@ -33,16 +33,23 @@ export default function LogoutButton({
         token = localStorage.getItem('token')
       }
       
-      // Call the logout API
+      // Call the logout API with proper authorization header
       const response = await fetch('/api/auth/logout', {
+        method: 'GET',
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       })
       
-      // Clear localStorage
+      if (!response.ok) {
+        throw new Error('Logout failed')
+      }
+      
+      // Clear all auth-related items from localStorage
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token')
         localStorage.removeItem('userId')
         localStorage.removeItem('userRole')
+        localStorage.removeItem('auth_token')
+        localStorage.removeItem('auth_user')
       }
       
       toast({

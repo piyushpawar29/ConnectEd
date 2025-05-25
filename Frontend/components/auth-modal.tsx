@@ -2,25 +2,23 @@
 import { Badge } from "@/components/ui/badge"
 import type React from "react"
 import { useState } from "react"
-import zxcvbn from "zxcvbn"
 import { motion } from "framer-motion"
-import { X, Mail, Lock, User, ChromeIcon as Google, Briefcase, GraduationCap } from "lucide-react"
+import { X, Mail, Lock, User, ChromeIcon as Google, Briefcase, GraduationCap, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { redirectToDashboard } from "@/utils/navigation"
+
 
 interface AuthModalProps {
-  type: "login" | "signup"
-  onClose: () => void
-  onSwitchType: (type: "login" | "signup") => void
+  type: "login" | "signup";
+  onClose: () => void;
+  onSwitchType: (type: "login" | "signup") => void;
+  onBack: () => void; // new prop
 }
 
 export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProps) {
@@ -49,8 +47,77 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
 
   const router = useRouter()
 
-  const [passwordStrength, setPasswordStrength] = useState(0)
+ // const [passwordStrength, setPasswordStrength] = useState(0)
   const [passwordError, setPasswordError] = useState("")
+
+  // State for success message display
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // Function to reset all form fields
+  const resetFormFields = () => {
+    setEmail("");
+    setPassword("");
+    setName("");
+    setError("");
+    setPasswordError("");
+    setUserRole("");
+    setShowRoleSelection(false);
+    setShowProfileForm(false);
+    
+    // Reset mentor fields
+    setBio("");
+    setSkills([]);
+    setExperience("");
+    setLanguages([]);
+    setCommunicationPreference("");
+    setCategoryValue("Technology");
+    
+    // Reset mentee fields
+    setInterests([]);
+    setGoals("");
+    setPreferredLanguages([]);
+  };
+  
+  // Function to handle registration success
+  const handleRegistrationSuccess = (data: any) => {
+    // Store token and user data
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
+      // Clear loading and errors
+      setLoading(false);
+      setError("");
+      
+      // Show success message
+      setSuccessMessage("Registration successful! Please login with your new account credentials.");
+      setShowSuccessMessage(true);
+      
+      // // Reset form fields
+      // resetFormFields();
+      
+      // Switch to login tab after short delay
+      setTimeout(() => {
+        setShowSuccessMessage(false);
+        onSwitchType("login");
+      }, 1500);
+    } else {
+      throw new Error("No token received");
+    }
+  };
+  const handleBack = () => {
+  if (showRoleSelection) {
+    setShowRoleSelection(false);
+  } else if (showProfileForm) {
+    setShowProfileForm(false);
+  }
+  };
+   
+  const validatePassword = (password: string) => {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{10,}$/;
+    return passwordRegex.test(password);
+  };
 
   // Direct form submission functions to avoid recursive issues
   const submitMentorForm = async (e: React.SyntheticEvent) => {
@@ -104,43 +171,9 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
           throw new Error(data.message || "Registration failed");
         }
         
-        // Success! Store token and redirect
+        // Success! Handle registration success
         if (data.token) {
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('user', JSON.stringify(data.user));
-          
-          // Display success message
-          setLoading(false);
-          setError(""); // Clear any errors
-          
-          // Show success UI with login prompt
-          const successMessage = `
-            Registration successful! 
-            
-            Please login with your new account credentials.
-          `;
-          
-          // Create success element and display it
-          const successDiv = document.createElement('div');
-          successDiv.innerHTML = successMessage;
-          successDiv.style.padding = '1rem';
-          successDiv.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
-          successDiv.style.border = '1px solid rgb(16, 185, 129)';
-          successDiv.style.borderRadius = '0.5rem';
-          successDiv.style.marginTop = '1rem';
-          successDiv.style.marginBottom = '1rem';
-          
-          // Find form container and insert success message
-          const formContainer = document.querySelector('form');
-          if (formContainer) {
-            formContainer.innerHTML = '';
-            formContainer.appendChild(successDiv);
-          }
-          
-          // Switch to login tab after short delay
-          setTimeout(() => {
-            onSwitchType("login");
-          }, 1500);
+          handleRegistrationSuccess(data);
         } else {
           throw new Error("No token received");
         }
@@ -199,43 +232,9 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
           throw new Error(data.message || "Registration failed");
         }
         
-        // Success! Store token and redirect
+        // Success! Handle registration success
         if (data.token) {
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('user', JSON.stringify(data.user));
-          
-          // Display success message
-          setLoading(false);
-          setError(""); // Clear any errors
-          
-          // Show success UI with login prompt
-          const successMessage = `
-            Registration successful! 
-            
-            Please login with your new account credentials.
-          `;
-          
-          // Create success element and display it
-          const successDiv = document.createElement('div');
-          successDiv.innerHTML = successMessage;
-          successDiv.style.padding = '1rem';
-          successDiv.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
-          successDiv.style.border = '1px solid rgb(16, 185, 129)';
-          successDiv.style.borderRadius = '0.5rem';
-          successDiv.style.marginTop = '1rem';
-          successDiv.style.marginBottom = '1rem';
-          
-          // Find form container and insert success message
-          const formContainer = document.querySelector('form');
-          if (formContainer) {
-            formContainer.innerHTML = '';
-            formContainer.appendChild(successDiv);
-          }
-          
-          // Switch to login tab after short delay
-          setTimeout(() => {
-            onSwitchType("login");
-          }, 1500);
+          handleRegistrationSuccess(data);
         } else {
           throw new Error("No token received");
         }
@@ -251,31 +250,31 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log("Form submitted - current state:", { type, showRoleSelection, showProfileForm, userRole })
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  console.log("Form submitted - current state:", { type, showRoleSelection, showProfileForm, userRole });
 
-    // Prevent multiple submissions
-    if (loading) {
-      console.log("Submission already in progress, ignoring request");
+  // Prevent multiple submissions
+  if (loading) {
+    console.log("Submission already in progress, ignoring request");
+    return;
+  }
+
+  // First screen - basic info
+  if (type === "signup" && !showRoleSelection) {
+    // const password = passwordRef.current.value;
+    if (!validatePassword(password)) {
+      setPasswordError("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.");
       return;
     }
 
-    // First screen - basic info
-    if (type === "signup" && !showRoleSelection) {
-      setShowRoleSelection(true)
-      return
-    }
+    setShowRoleSelection(true);
+    return;
+  }
 
     // Second screen - role selection
     if (type === "signup" && showRoleSelection && !showProfileForm && userRole) {
       setShowProfileForm(true)
-      return
-    }
-
-    // Password strength check
-    if (type === "signup" && passwordStrength < 3) {
-      setPasswordError("Password is too weak. Use a mix of letters, numbers, and symbols.")
       return
     }
 
@@ -454,45 +453,10 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
               }
             }
 
-            // Store token in localStorage
+            // Handle registration success
             if (data.token) {
-              localStorage.setItem('token', data.token);
               console.log("Token stored in localStorage, preparing to redirect user");
-              
-              // Store user data for easier access
-              localStorage.setItem('user', JSON.stringify(data.user));
-              
-              // Clear any form errors
-              setError("");
-              
-              // Show success UI with login prompt
-              const successMessage = `
-                Registration successful! 
-                
-                Please login with your new account credentials.
-              `;
-              
-              // Create success element and display it
-              const successDiv = document.createElement('div');
-              successDiv.innerHTML = successMessage;
-              successDiv.style.padding = '1rem';
-              successDiv.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
-              successDiv.style.border = '1px solid rgb(16, 185, 129)';
-              successDiv.style.borderRadius = '0.5rem';
-              successDiv.style.marginTop = '1rem';
-              successDiv.style.marginBottom = '1rem';
-              
-              // Find form container and insert success message
-              const formContainer = document.querySelector('form');
-              if (formContainer) {
-                formContainer.innerHTML = '';
-                formContainer.appendChild(successDiv);
-              }
-              
-              // Switch to login tab after short delay
-              setTimeout(() => {
-                onSwitchType("login");
-              }, 1500);
+              handleRegistrationSuccess(data);
             } else {
               setError("Registration successful but no token received. Please try logging in.");
               setLoading(false);
@@ -588,11 +552,12 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
             <SelectValue placeholder="Select your skills" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="programming">Programming</SelectItem>
+            <SelectItem value="technology">Technology</SelectItem>
             <SelectItem value="design">Design</SelectItem>
             <SelectItem value="marketing">Marketing</SelectItem>
             <SelectItem value="business">Business</SelectItem>
             <SelectItem value="data-science">Data Science</SelectItem>
+            <SelectItem value="other">Other</SelectItem>
           </SelectContent>
         </Select>
         <div className="flex flex-wrap gap-2 mt-2">
@@ -633,6 +598,8 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
             <SelectItem value="french">French</SelectItem>
             <SelectItem value="german">German</SelectItem>
             <SelectItem value="mandarin">Mandarin</SelectItem>
+            <SelectItem value="hindi">Hindi</SelectItem>
+            <SelectItem value="other">Other</SelectItem>
           </SelectContent>
         </Select>
         <div className="flex flex-wrap gap-2 mt-2">
@@ -658,22 +625,6 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
             <SelectItem value="Audio Call">Audio Call</SelectItem>
             <SelectItem value="Chat">Chat</SelectItem>
             <SelectItem value="Any">Any</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="category">Primary Category</Label>
-        <Select onValueChange={(value) => setCategoryValue(value)}>
-          <SelectTrigger className="bg-gray-800 border-gray-700">
-            <SelectValue placeholder="Select your primary category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Technology">Technology</SelectItem>
-            <SelectItem value="Business">Business</SelectItem>
-            <SelectItem value="Design">Design</SelectItem>
-            <SelectItem value="Marketing">Marketing</SelectItem>
-            <SelectItem value="Other">Other</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -741,7 +692,7 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
             <SelectValue placeholder="Select your interests" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="programming">Programming</SelectItem>
+            <SelectItem value="technology">Technology</SelectItem>
             <SelectItem value="design">Design</SelectItem>
             <SelectItem value="marketing">Marketing</SelectItem>
             <SelectItem value="business">Business</SelectItem>
@@ -784,6 +735,7 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
             <SelectItem value="french">French</SelectItem>
             <SelectItem value="german">German</SelectItem>
             <SelectItem value="mandarin">Mandarin</SelectItem>
+            <SelectItem value="other">Other</SelectItem>
           </SelectContent>
         </Select>
         <div className="flex flex-wrap gap-2 mt-2">
@@ -841,21 +793,6 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
     </div>
   )
 
-  // Add direct backend testing function
-  const testBackendConnection = async () => {
-    try {
-      const res = await fetch("http://localhost:5001/api/auth/test", {
-        method: "GET",
-      });
-      const data = await res.json();
-      console.log("Backend connection test:", data);
-      alert(`Backend connection: ${res.ok ? "SUCCESS" : "FAILED"}\nStatus: ${res.status}\nResponse: ${JSON.stringify(data)}`);
-    } catch (error) {
-      console.error("Backend connection test error:", error);
-      alert(`Backend connection test failed: ${error}`);
-    }
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -887,46 +824,6 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
             {type === "login" ? "Sign in to your account" : "Join thousands of learners and mentors"}
           </p>
           </div>
-          {/* Debug mode toggle */}
-          {/* <div className="absolute top-4 left-4">
-            <button 
-              className="text-xs text-gray-500 hover:text-gray-300"
-              onClick={(e) => {
-                e.preventDefault();
-                setDebugMode(!debugMode);
-              }}
-            >
-              Debug: {debugMode ? "ON" : "OFF"}
-            </button>
-          </div> */}
-          
-          {/* Backend connection test */}
-          {/* {debugMode && (
-            <div className="mt-2">
-              <button
-                className="text-xs text-cyan-500 hover:text-cyan-400"
-                onClick={(e) => {
-                  e.preventDefault();
-                  testBackendConnection();
-                }}
-              >
-                Test Backend Connection
-              </button>
-              <div className="text-xs text-gray-500 mt-1">Backend URL: http://localhost:5001</div>
-              
-              {/* Debug dashboard links */}
-            {/*  <div className="mt-2 space-x-2">
-                <a href="/dashboard/mentor" className="text-xs text-purple-500 hover:text-purple-400">
-                  Mentor Dashboard
-                </a>
-                <span className="text-gray-500">|</span>
-                <a href="/dashboard/mentee" className="text-xs text-cyan-500 hover:text-cyan-400">
-                  Mentee Dashboard
-                </a>
-              </div>
-            </div>
-          )}
-        </div> */}
 
         <Tabs defaultValue={type} onValueChange={(value) => onSwitchType(value as "login" | "signup")}>
           <TabsList className="grid grid-cols-2 mb-6">
@@ -939,6 +836,12 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
               {error && (
                 <div className="bg-red-500/10 border border-red-500/50 text-red-500 rounded-lg p-3 mb-4 text-sm">
                   {error}
+                </div>
+              )}
+              
+              {showSuccessMessage && (
+                <div className="bg-green-500/10 border border-green-500/50 text-green-500 rounded-lg p-3 mb-4 text-sm">
+                  {successMessage}
                 </div>
               )}
 
@@ -977,8 +880,8 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
                       onChange={(e) => {
                         const value = e.target.value
                         setPassword(value)
-                        const result = zxcvbn(value)
-                        setPasswordStrength(result.score)
+                        // const result = zxcvbn(value)
+                        // setPasswordStrength(result.score)
                         setPasswordError("")
                       }}
                       required
@@ -1009,19 +912,26 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
 
            
           </TabsContent>
-
-          <TabsContent value="signup">
-            <form onSubmit={handleSubmit}>
+          <TabsContent value={type}>
+            {type === "signup" && (
+              <div>
+                {<form onSubmit={handleSubmit}>
               {error && (
                 <div className="bg-red-500/10 border border-red-500/50 text-red-500 rounded-lg p-3 mb-4 text-sm">
                   {error}
+                </div>
+              )}
+              
+              {showSuccessMessage && (
+                <div className="bg-green-500/10 border border-green-500/50 text-green-500 rounded-lg p-3 mb-4 text-sm">
+                  {successMessage}
                 </div>
               )}
 
               {!showRoleSelection && (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
+                    <Label htmlFor="name">Name</Label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
@@ -1065,28 +975,18 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
                         onChange={(e) => {
                           const value = e.target.value
                           setPassword(value)
-                          const result = zxcvbn(value)
-                          setPasswordStrength(result.score)
+                          // const result = zxcvbn(value)
+                          // setPasswordStrength(result.score)
                           setPasswordError("")
                         }}
                         required
                       />
                     </div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      Password must be at least 10 characters long and contain at least one uppercase letter, one lowercase letter,one symbol and one number.
+                    </div>
                     <div className="mt-1">
-                      <div className="h-2 w-full bg-gray-700 rounded">
-                        <div
-                          className={`h-2 rounded transition-all duration-300 ${
-                            ["bg-red-500", "bg-orange-500", "bg-yellow-500", "bg-green-400", "bg-green-600"][passwordStrength]
-                          }`}
-                          style={{ width: `${(passwordStrength + 1) * 20}%` }}
-                        />
-                      </div>
                       {passwordError && <p className="text-xs text-red-500 mt-1">{passwordError}</p>}
-                      {!passwordError && (
-                        <p className="text-xs text-gray-400 mt-1">
-                          Strength: {["Very Weak", "Weak", "Fair", "Good", "Strong"][passwordStrength]}
-                        </p>
-                      )}
                     </div>
                   </div>
                   <Button
@@ -1132,7 +1032,15 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
                   {renderMentorProfileForm()}
                 </div>
               )}
-            </form>
+            </form>}
+                {(showRoleSelection || showProfileForm) && (
+                  <Button onClick={handleBack} className="bg-transparent text-gray-200 mt-3 hover:bg-gradient-to-r hover:from-cyan-500 hover:to-blue-600">
+                    <ArrowLeft className="h-4 w-4 text-gray-200 hover:text-black" />
+                    Back
+                  </Button>
+                )}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </motion.div>

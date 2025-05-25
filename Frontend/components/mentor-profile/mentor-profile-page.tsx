@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
+import LogoutButton from "@/components/logout-button"
 import {
   ArrowLeft,
   Calendar,
@@ -19,6 +20,7 @@ import {
   Github,
   Twitter,
   XCircle,
+  Info as InfoIcon,
   Users,
   Award,
   BookOpen,
@@ -104,6 +106,7 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
         // Safely extract data with fallbacks
         const mentorData = {
           id: mentor._id || mentorId,
+          userId: mentor.user?._id, // Store the user ID separately for API calls
           name: mentor.user?.name || 'Anonymous Mentor',
           email: mentor.user?.email || '',
           avatar: mentor.user?.avatar || '/placeholder.svg',
@@ -127,8 +130,15 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
           location: mentor.location || 'Remote'
         }
 
+        // Log the mentor data with the user ID for debugging
         console.log('Mentor data successfully retrieved:', mentorData)
-        setMentor(mentorData)
+        console.log('Mentor user ID for reviews:', mentor.user?._id)
+        
+        // Store the raw user ID directly in the component state for use in the review form
+        setMentor({
+          ...mentorData,
+          userId: mentor.user?._id // Ensure the user ID is correctly stored
+        })
       } catch (err) {
         setError("Failed to load mentor profile. Please try again later.")
         console.error('Error fetching mentor:', err)
@@ -418,7 +428,7 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
   // If mentor data is loaded successfully
   if (mentor) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 pt-20 pb-16">
+      <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 pt-6 pb-16">
        <div className="absolute top-4 left-0 w-full h-14 bg-gray-900/50 backdrop-blur-sm z-10">
             <div className="container mx-auto px-4 flex items-center justify-between">
              <a href="/" className="flex items-center gap-2 z-50">
@@ -436,17 +446,13 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
                     Home Page
                   </Button>
                 </a>
-                <a href="/logout">
-                  <Button variant="outline" className="border-cyan-500 text-cyan-500 hover:bg-cyan-950">
-                    Logout
-                  </Button>
-                </a>
+                <LogoutButton variant="outline" className="border-cyan-500 text-cyan-500 hover:bg-cyan-950" />
                 </div>
               </div>
             </div>
 
         {/* Back button */}
-        <div className="container mx-auto px-4 mb-6">
+        <div className="container mx-auto px-4 mb-4 mt-14">
           <Button variant="ghost" className="text-gray-400 hover:text-white" onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
@@ -1354,10 +1360,12 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
           <DialogContent className="bg-gray-900 border-gray-800 text-white">
             <DialogHeader>
               <DialogTitle className="text-2xl">Leave a Review</DialogTitle>
-              <DialogDescription className="text-gray-400">Share your experience with {mentor.name}</DialogDescription>
+              <DialogDescription className="text-gray-400">
+                Share your experience with {mentor.name}
+              </DialogDescription>
             </DialogHeader>
 
-            <ReviewForm mentorId={mentorId} onSuccess={() => setShowReviewDialog(false)} />
+            <ReviewForm mentorId={mentor.userId} onSuccess={() => setShowReviewDialog(false)} />
           </DialogContent>
         </Dialog>
       </div>

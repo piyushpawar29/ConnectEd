@@ -168,9 +168,9 @@ export const sessionAPI = {
 
 // Review APIs
 export const reviewAPI = {
-  // Use frontendApi for client-side requests
+  // Use direct API call to backend
   addReview(mentorId: string, data: any) {
-    return api.post(`/reviews/${mentorId}`, data)
+    return api.post(`/mentors/${mentorId}/reviews`, data)
   },
   updateReview(id: string, data: any) {
     return api.put(`/reviews/${id}`, data)

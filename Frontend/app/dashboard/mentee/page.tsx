@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
+import LogoutButton from "@/components/logout-button"
 import { useToast } from "@/hooks/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -40,6 +41,7 @@ interface Mentor {
 }
 
 interface Session {
+  mentorEmail: string
   id: string
   mentorId: string
   mentorName: string
@@ -147,8 +149,32 @@ export default function MenteeDashboard() {
           console.log('Sessions API response:', sessionsResponse.data);
           
           if (sessionsResponse.data && sessionsResponse.data.data && Array.isArray(sessionsResponse.data.data)) {
-            setUpcomingSessions(sessionsResponse.data.data);
-            console.log('Mentee sessions fetched successfully:', sessionsResponse.data.data);
+            // Map the backend data to the frontend Session interface format
+            const formattedSessions = sessionsResponse.data.data.map((session: {
+              _id: string;
+              mentor: {
+                _id: string;
+                name: string;
+                email: string;
+                avatar?: string;
+              };
+              date: string;
+              duration: number;
+              title: string;
+              status: string;
+            }) => ({
+              id: session._id,
+              mentorId: session.mentor._id,
+              mentorName: session.mentor.name,
+              mentorEmail: session.mentor.email,
+              mentorImage: session.mentor.avatar || '',
+              date: session.date,
+              duration: session.duration,
+              topic: session.title,
+              status: session.status
+            }));
+            setUpcomingSessions(formattedSessions);
+            console.log('Mentee sessions fetched successfully:', formattedSessions);
           } else {
             console.warn('Sessions data format unexpected:', sessionsResponse.data);
           }
@@ -275,12 +301,7 @@ export default function MenteeDashboard() {
                     Home Page
                   </Button>
                 </Link>
-                <Link href="/" passHref>
-                  <Button variant="outline" className="border-cyan-500 text-cyan-500 hover:bg-cyan-950">
-                    
-                    Logout
-                  </Button>
-                </Link>
+                <LogoutButton variant="outline" className="border-cyan-500 text-cyan-500 hover:bg-cyan-950" />
               </div>
             </div>
           </header>
@@ -308,22 +329,19 @@ export default function MenteeDashboard() {
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3">
                           <Avatar>
-                            {/* <AvatarImage src={session.mentorImage} alt={session.mentorName || 'Mentor'} /> */}
-                            <AvatarFallback>{session.mentorName ? session.mentorName.charAt(0) : 'M'}</AvatarFallback>
+                            {session.mentorImage ? (
+                              <AvatarImage src={session.mentorImage} alt={session.mentorName || 'Mentor'} />
+                            ) : (
+                              <AvatarFallback>{session.mentorName ? session.mentorName.charAt(0) : 'M'}</AvatarFallback>
+                            )}
                           </Avatar>
                           <div>
                             <h4 className="font-medium">{session.mentorName}</h4>
                             <p className="text-sm text-gray-400">{session.topic}</p>
                           </div>
                         </div>
-                        <Badge
-                          className={
-                            session.status === "confirmed"
-                              ? "bg-green-500/20 text-green-400"
-                              : "bg-yellow-500/20 text-yellow-400"
-                          }
-                        >
-                          {session.status === "confirmed" ? "Confirmed" : "Pending"}
+                        <Badge className="bg-green-500/20 text-green-400">
+                          Confirmed
                         </Badge>
                       </div>
                       <div className="mt-3 flex flex-wrap gap-4 text-sm">
@@ -349,7 +367,8 @@ export default function MenteeDashboard() {
                         </Button>
                         </a>  
                         
-                        <Button variant="outline" className="border-gray-700 hover:bg-gray-800">
+                        <Button variant="outline" className="border-gray-700 hover:bg-gray-800"
+                        onClick={() => window.open(`mailto:${session.mentorEmail || "contact@mentorai.com"}`)}>
                           <MessageSquare className="h-4 w-4 mr-2" />
                           Message
                         </Button>

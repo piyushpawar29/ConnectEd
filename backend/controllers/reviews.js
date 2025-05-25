@@ -56,19 +56,8 @@ exports.addReview = async (req, res) => {
       });
     }
 
-    // Check if mentee has completed a session with the mentor
-    const sessions = await Session.find({
-      mentor: req.params.mentorId,
-      mentee: req.user.id,
-      status: 'completed'
-    });
-
-    if (sessions.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'You must complete a session with this mentor before leaving a review'
-      });
-    }
+    // Session completion check removed as per requirement
+    // Users can now submit reviews without completing a session
 
     // Check if the review already exists
     const existingReview = await Review.findOne({
@@ -83,10 +72,10 @@ exports.addReview = async (req, res) => {
       });
     }
 
-    // Create review
+    // Create review without session reference
     const review = await Review.create({
-      ...req.body,
-      session: sessions[0]._id
+      ...req.body
+      // session reference removed as session completion check was removed
     });
 
     // Update mentor's rating
