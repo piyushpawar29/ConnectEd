@@ -42,7 +42,10 @@ export default function RootLayout({
           {/* Navigation progress indicator removed */}
           {/* Navbar will be conditionally rendered inside the component */}
           <div className="min-h-screen flex flex-col">
-            <div className="flex-grow pt-6">
+            <div className="flex-grow">
+              {/* <div className="fixed inset-0 z-0 pointer-events-none">
+                <BackgroundScene />
+              </div> */}
               {children}
             </div>
           </div>
@@ -55,3 +58,4 @@ export default function RootLayout({
 
 
 import './globals.css'
+import BackgroundScene from "@/components/background-scene"

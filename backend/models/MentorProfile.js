@@ -56,20 +56,10 @@ const MentorProfileSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  socials: {
-    linkedin: {
-      type: String
-    },
-    twitter: {
-      type: String
-    },
-    website: {
-      type: String
-    },
-    github: {
-      type: String
-    }
-  }
+  bio: {
+    type: String,
+    required: [true, 'Please add a bio']
+  },
 }, {
   timestamps: true
 });

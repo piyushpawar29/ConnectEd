@@ -275,7 +275,8 @@ export default function MenteeDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 pb-16">
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 pb-16 pt-16">
+      
       <header className="absolute top-4 left-0 w-full h-14 bg-gray-900/50 backdrop-blur-sm z-10">
             <div className="container mx-auto px-4 flex items-center justify-between">
              <Link href="/" className="flex items-center gap-2 z-50">
@@ -360,11 +361,17 @@ export default function MenteeDashboard() {
                         </Button>
                         </a>  
                         
-                        <Button variant="outline" className="border-gray-700 hover:bg-gray-800"
+                        {/* <Button variant="outline" className="border-gray-700 hover:bg-gray-800"
                         onClick={() => window.open(`mailto:${session.mentorEmail || "contact@mentorai.com"}`)}>
                           <MessageSquare className="h-4 w-4 mr-2" />
                           Message
+                        </Button> */}
+                        <Link href={`/mentee/chat/${session.mentorId}`}>
+                        <Button variant="outline" className="border-gray-700 hover:bg-gray-800">
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          Message
                         </Button>
+                        </Link>
                       </div>
                     </motion.div>
                   ))}
